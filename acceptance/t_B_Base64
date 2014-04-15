@@ -1,0 +1,53 @@
+#!/opt/perl5/bin/perl
+
+##
+##   TEST SET: Base64
+##
+##   This test set performs checks on the custom Base64 module which encodes
+##   and decodes base64 strings.
+##
+##   AUTHOR: Victor Burns
+##     DATE: 2012-Apr-20
+##
+##   CHANGES:
+##    2012-Apr-20 VICB - Original release
+##
+
+use strict;
+use warnings;
+use Data::Dumper;
+
+use Test::More tests => 17;
+
+BEGIN { use_ok( 'Base64 ' ); }
+
+my $b64;             ## Class inst
+my $cname = 'Base64';
+my $ts    = time();
+my $tests = [
+    [ 'BPcvEN',     1332932877 ],
+    [ 'Base64',     1521610424 ],
+    [ 'Scouts',    19807791980 ],
+    [ '100005',    57794579769 ],
+    [ 'Babies',     1517168556 ],
+    [ 'Rainbow', 1196729154096 ],
+    [ 'Zero0GG', 1750931292550 ],
+    [ 'Alma',           154010 ],
+    [ '_._._',      1056960510 ],
+    [ '__...',      1056702463 ],
+    [ '...__',      1073741758 ],
+    [ '._._.',      1073479615 ]
+  ];
+
+#-- Create instance (Check initial status)
+ok( $b64 = new Base64, 'Create Property Instance' );
+ok( ref $b64 eq $cname, "Class == '$cname'" );
+ok( ref $b64 eq $cname && $b64->encode64(1332932877) eq 'BPcvEN', 'Check before' );
+ok( ref $b64 eq $cname && $b64->decode64($b64->encode64($ts)) == $ts, 'Check now' );
+
+foreach my $i ( @$tests )
+{
+  is( $b64->decode64($i->[0]), $i->[1], 'checking pattern ' . $i->[0] );
+}
+
+## END

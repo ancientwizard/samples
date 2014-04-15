@@ -1,0 +1,31 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Data::Dumper;
+use Cwd;
+use File::Basename;
+
+our @SAMPLELIBPATHS;
+
+BEGIN
+{
+  ## A few SECURITY settings
+  $ENV{PATH}     = '/sbin:/usr/sbin:/usr/bin';
+  $ENV{SHELL}    = '/sbin/sh';
+  delete @ENV{qw(BASH_ENV IFS)};
+
+  push @SAMPLELIBPATHS, '../module';
+}
+
+use lib @SAMPLELIBPATHS;
+use TAP::Harness;
+
+my $args = { verbosity => 0, lib => [ @SAMPLELIBPATHS ] };
+my $harness = TAP::Harness->new( $args );
+
+my $tests = [ <t_[A-Z]_*> ];
+
+$harness->runtests( @$tests );
+
+## END

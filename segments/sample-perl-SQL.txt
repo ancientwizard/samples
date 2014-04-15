@@ -1,0 +1,56 @@
+
+##
+##  A section of Perl from a larger module which cannot be shared in
+##   its entirety. It Illustrates Oracle SQL syntax but could have been
+##   done for mySQL as easily.
+##
+
+# -- SNIP --
+
+sub BEGIN
+{
+  ## Configure SQL
+
+  $SQL_STATEMENTS->{'INCREMENT_WRITE_VOLUMES'} =
+    'UPDATE CURRENT_WRITE_VOLUMES
+     SET
+     CURRENT_USED      = CURRENT_USED + ?,
+     VOLUME_TOTAL_OBJ  = VOLUME_TOTAL_OBJ + ?,
+     CURRENT_OBJ_COUNT = CURRENT_OBJ_COUNT + ?,
+     LAST_CU_DTTM      = SYSDATE
+     WHERE VOLUME_ID   = ? AND CURRENT_B_DIR = ? ';
+
+  $SQL_STATEMENTS->{'INCREMENT_RUNNING_TOTALS'} =
+    'UPDATE CURRENT_WRITE_VOLUMES
+     SET
+     CURRENT_USED      = CURRENT_USED + ?,
+     VOLUME_TOTAL_OBJ  = VOLUME_TOTAL_OBJ + ?,
+     LAST_CU_DTTM      = SYSDATE
+     WHERE VOLUME_ID   = ? ';
+
+  $SQL_STATEMENTS->{'DECREMENT_WRITE_VOLS'} =
+    'UPDATE CURRENT_WRITE_VOLUMES
+     SET
+     CURRENT_USED      = CURRENT_USED - ?,
+     VOLUME_TOTAL_OBJ  = VOLUME_TOTAL_OBJ - ?,
+     LAST_CU_DTTM      = SYSDATE
+     WHERE VOLUME_ID   = ?';
+
+  $SQL_STATEMENTS->{'ONLINE'} =
+     'UPDATE CURRENT_WRITE_VOLUMES SET
+      IS_ONLINE      = 1
+      WHERE
+      VOLUME_ID = ?';
+
+  $SQL_STATEMENTS->{'OFFLINE'} =
+     'UPDATE CURRENT_WRITE_VOLUMES SET
+      IS_ONLINE       = 0
+      WHERE VOLUME_ID = ?';
+
+  $SQL_STATEMENTS->{'LOCK1'} =
+     'UPDATE CURRENT_WRITE_VOLUMES SET
+      LOCK_1          = 1
+      WHERE VOLUME_ID = ?';
+
+
+# -- SNIP --

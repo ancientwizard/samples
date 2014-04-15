@@ -1,0 +1,210 @@
+
+##
+##  Sample functions from a larger module which cannot be shared
+##   in its entirety.
+##
+
+## -- SNIP --
+
+##
+##  Ping()
+##  PingWrite()     (not one of the original methods, added for local use)
+##
+##  Description: Performs simple interrogation of Tier3 storage mounts
+##     to determine if it "may" be possible to perform a Tier3 operation.
+##     A "pass" here may still fail later should a later operation
+##     require more than this method could test without more information.
+##
+##     The PingWrite() attempts to check if one one or more volumes are
+##     available for copy_in. The Ping() only asks if services are online
+##     and makes no attempt to determine if changes can be made. This
+##     behavior allows for a restore operation to take place as long as
+##     services are online but may not allow updates.
+##
+##  Arguments: none required
+##
+##  RETURNS: Unix like error codes (0 = okay)
+##
+
+sub Ping
+{
+  my $self = shift(@_);
+  my $RET  = 0;          ## Assume Okay until Fail (unix style errorcode)
+
+  $RET ||= ! (($self->_get_storage_object)->isAvailableForRead)->isOkay;
+  $RET ||= ! (($self->_get_clip_manager  )->isOnline          )->isOkay;
+
+  (new AC::Tier3::Cmd)->_print_debugging if $RET;
+
+  return $RET ? 1 : 0;
+}
+
+sub PingWrite
+{
+  my $self = shift(@_);
+  my $RET  = 0;          ## Assume Okay until Fail (unix style errorcode)
+
+  $RET ||= ! (($self->_get_storage_object)->isAvailableForWrite)->isOkay;
+  $RET ||= ! (($self->_get_clip_manager  )->isOnline           )->isOkay;
+
+  (new AC::Tier3::Cmd)->_print_debugging if $RET;
+
+  return $RET ? 1 : 0;
+}
+
+
+##
+##  Verify_XML_Manifest()
+##
+##  Description: Performs an in-place scan of a standard DAC/TAC XML
+##      manifest file. The manifest file and the archive set it describes
+##      are verified for existance.
+##
+##  Arguments:
+##    CLIP   - the AC::Tier3 CLIP_ID of the XML manifest file.
+##
+##  RETURNS: Unix like error codes (0 = okay)
+##    successful == all archive objects found.
+##
+
+sub Verify_XML_Manifest
+{
+  my $self   = $_[0];
+  my $RET    = 0;    ## Assume Okay until Fail (unix style errorcode)
+  my $checks = 0;
+  my $fails  = 0;
+  my $start;
+
+  ##
+  ##  Argument Debugging
+  ##
+
+  unless( defined $ENV{TIER3_QUIET} )
+  {
+    my @opts = @_; shift @opts;
+    printf "${IDENT}: Verify_XML_Manifest()\n%s", Dumper \@opts;
+  }
+
+
+  ##
+  ## INIT()  - enabled
+  ##
+  ##  This may be the first call into the module. Init the instance and
+  ##  class if not setup before.... must be done once per program lifetime.
+  ##
+
+  $self->_init;
+
+
+  ##
+  ## Dial down debug messages (error messages only)
+  ##
+
+  (new Returned)->debug_capture_off;
+
+
+  ##
+  ## Tier3 Status
+  ##
+  ##  We need to know that Tier3 storage is available for READ
+  ##  and that the CLIP manager service is online. We check once
+  ##  at the beginning to help ensure reads will be successful
+  ##  before the calls to access.
+  ##
+
+  $RET ||= $self->Ping;
+
+
+  ##
+  ## Argument "care-about" list - some variables are only useful to
+  ##    non-tier3 solutions... we capture them all but use only those
+  ##    with Tier3 implications.
+  ##
+  ##     1) Solution Name  (Tier3)
+  ##     2) CLIP
+  ##     3) error-log
+  ##     4) report modulo  (default 100k)  (Optional)
+  ##
+
+  $self->_arg_SolutionName( $_[1] );
+  $self->_arg_Clip(         $_[2] );
+  $self->_arg_ErrorLogFile( $_[3] );
+  $self->_arg_ReportModulo( $_[4] ? $_[4] : 100000 );
+ 
+  $self->_arg_ReportModulo( 1000 ) if( $self->_arg_ReportModulo < 1000 );
+
+  ##
+  ## Reset Error file at the beginning of each Operation
+  ##  (assume caller expects overwrite)
+
+  $RET ||= ! $self->_zero_error_file;
+
+
+  ##
+  ##  Perform the verification
+  ##
+
+  ATTEMPT_VERIFY:
+  {
+    my( $o_check, $xml, $path );
+    $start = time;
+
+    #-- verify initial object
+    $checks++;
+    $RET ||= ! ($o_check = $self->_verify_object)->isOkay;
+
+    last ATTEMPT_VERIFY if $RET;
+
+    #-- Object must be a file or we can't load it as XML
+    if( -l ($path = $o_check->getProperty('path')))
+    {
+      $fails++;
+      $RET = 1;
+      new Returned(0, sprintf("${IDENT}: cannot verify SYMLINK manifest %s", $path));
+      last ATTEMPT_VERIFY;
+    }
+    
+    #-- Object should be XML, Load its contents
+    unless(($o_check = _XMLrd($path))->isOkay)
+    {
+      $RET = 1;
+      last ATTEMPT_VERIFY;
+    }
+
+    $xml   = $o_check->getProperty('xml');
+
+    foreach my $obj ( @{$xml->{'DirectRetrieveFiles'}{'Files'}{'File'}} )
+    {
+      next if $obj->{'filetype'} eq 'D';
+
+      $checks++;
+      $o_check = $self->_verify_object($obj->{'cclipid'});
+      $RET = 1 unless $o_check->isOkay;
+      $fails++ unless $o_check->isOkay;
+
+      if(($checks % $self->_arg_ReportModulo) == 0 )
+      {
+        printf "  INFO - Performed %4dK verifications with %d failures in %2.1f minutes\n",
+          $checks/1000, $fails, (time - $start)/60;
+      }
+    }
+  }
+
+  if( $checks >= $self->_arg_ReportModulo )
+  {
+    printf "  INFO - Performed %4dK verifications with %d failures in %2.1f minutes\n",
+          $checks/1000, $fails, (time - $start)/60;
+  }
+  else
+  {
+    printf "  INFO - Performed %d verifications with %d failures in %2.1f minutes\n",
+          $checks, $fails, (time - $start)/60;
+  }
+
+  (new AC::Tier3::Cmd)->_print_debugging if $RET;
+
+  return $RET ? 1 : 0;
+}
+
+
+## -- SNIP --

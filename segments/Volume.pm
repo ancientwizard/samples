@@ -1,6 +1,7 @@
 
 ##
-##  Example POD: taken from a module a composed but which cannot be shared
+##  Example POD: taken from a module I composed which cannot be
+##         shared in it entirety
 ##
 
 1;

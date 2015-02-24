@@ -1,9 +1,9 @@
 
-  Perl code examples:
+  Perl examples:
 
-  - simple modules
-  - test code for modules
-  - blocks of Perl code / SQL
-  - POD example
-  - zonetool.pl
+  - POD              ->> in Perl code, modules etc
+  - Application      ->> bin/zonetool.pl
+  - Simple .pm       ->> module/
+  - Module test code ->> acceptance/ (see ./run_all)
+  - partial code     ->> segments/
 

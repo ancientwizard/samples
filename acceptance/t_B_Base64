@@ -1,4 +1,4 @@
-#!/opt/perl5/bin/perl
+#!/usr/bin/env perl
 
 ##
 ##   TEST SET: Base64

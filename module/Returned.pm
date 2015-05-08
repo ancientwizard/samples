@@ -310,7 +310,9 @@ Property
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2009-2014, ancient.wizard. All rights reserved.
+The "Artistic License"
+
+URL http://dev.perl.org/licenses/artistic.html
 
 =cut
 

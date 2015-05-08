@@ -7,6 +7,10 @@
 ##  Author: Victor Burns
 ##    Date: 2013-11-20
 ##
+##   LICENSE:
+##    The "Artistic License"
+##    URL http://dev.perl.org/licenses/artistic.html
+##
 
 use strict;
 use warnings;

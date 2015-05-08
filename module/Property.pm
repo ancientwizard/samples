@@ -84,7 +84,7 @@ sub getProperty
   my $self = shift;
   my $prop = shift;
 
-  return( defined $self->{PROPS}{$prop} ? $self->{PROPS}{$prop} : undef );
+  return( exists $self->{PROPS}{$prop} ? $self->{PROPS}{$prop} : undef );
 }
 
 
@@ -288,7 +288,9 @@ N/A
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2005-2014, ancient.wizard. All rights reserved.
+The "Artistic License"
+
+URL http://dev.perl.org/licenses/artistic.html
 
 =cut
 

@@ -131,7 +131,9 @@ N/A
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2005-2014, Ancient.Wizard. All rights reserved.
+The "Artistic License"
+
+URL http://dev.perl.org/licenses/artistic.html
 
 =cut
 

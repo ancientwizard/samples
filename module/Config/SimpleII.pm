@@ -591,7 +591,9 @@ Property
 
 =head1 LICENSE AND COPYRIGHT
 
-BLANK
+The "Artistic License"
+
+URL http://dev.perl.org/licenses/artistic.html
 
 =cut
 

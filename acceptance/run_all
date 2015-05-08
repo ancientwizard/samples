@@ -1,5 +1,12 @@
 #!/usr/bin/env perl
 
+## AUTHOR: Victor Burns
+##
+## LICENSE:
+## The "Artistic License"
+## URL http://dev.perl.org/licenses/artistic.html
+##
+
 use strict;
 use warnings;
 use Data::Dumper;

@@ -26,7 +26,7 @@ use Property;
 
 
 ##  Inherit from Property Class
-use base qw(Property);
+use base qw| Property |;
 
 our $VERSION = 1.0;
 
@@ -85,19 +85,20 @@ sub _encode64
   INPUT_TYPE:
   {
     ## Single integer
-    if( defined $in_num && '' eq ref $in_num )
+    if ( defined $in_num && '' eq ref $in_num )
     {
-      $base64num = $self->_encode64_i($code64, $in_num);
+      $base64num = $self->_encode64_i( $code64, $in_num );
       last INPUT_TYPE;
     }
 
     ## Array of integers
-    if( defined $in_num && 'ARRAY' eq ref $in_num )
+    if ( defined $in_num && 'ARRAY' eq ref $in_num )
     {
-      foreach my $i ( reverse @$in_num )
+      foreach my $i ( reverse @ $in_num )
       {
         $base64num .= $self->_encode64_i($code64, $i );
       }
+
       last INPUT_TYPE;
     }
   }
@@ -114,7 +115,7 @@ sub _encode64_i
   my $curDig;
   my $base64num = '';
 
-  while(($base64num eq '') || ($curRem > 0))
+  while (( $base64num eq '' ) || ( $curRem > 0 ))
   {
     $curDig    = ($curRem % 64);
     $base64num = $code64->[$curDig] . $base64num;
@@ -134,7 +135,7 @@ sub _decode64
 
   my $ichars = [ split //, $b64s ];
 
-  while( defined( $c = shift @$ichars ))
+  while ( defined( $c = shift @ $ichars ))
   {
     $numbr *= 64;
     $numbr += $BASE64_MAP->{$c};
@@ -192,12 +193,12 @@ The new method constructs an instance of the defined class type.
 
  ## Always True
  my $ts = time;
- if( $ts == $b64->decode64($b64->encode64($ts)))
+ if ( $ts == $b64->decode64($b64->encode64($ts)))
  {
     ...
  }
 
- if( $ts == $b64->decode64($b64->encode64_standard($ts)))
+ if ( $ts == $b64->decode64($b64->encode64_standard($ts)))
  {
     ...
  }

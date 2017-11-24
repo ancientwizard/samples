@@ -1,12 +1,3 @@
-##
-## SVN Header
-##
-##    Repository: $HeadURL: https://svn.worldnet.ml.com/svnrepos/secengunix/sshkeymgmt/trunk/TrustGuardian/module/Config/SimpleII.pm $
-##     Committed: $LastChangedRevision: 684 $
-##    Changed by: $LastChangedBy: zkokbez $
-##  Changed date: $LastChangedDate: 2015-02-23 07:10:42 -0600 (Mon, 23 Feb 2015) $
-##            ID: $Id: SimpleII.pm 684 2015-02-23 13:10:42Z zkokbez $
-##
 
 ##
 ## PACKAGE Config::SimpleII( )
@@ -30,13 +21,13 @@ package Config::SimpleII;
 
 use strict;
 use warnings;
-use Fcntl qw(:flock);
+use Fcntl       qw| :flock |;
 use Returned;
 use MIME::Base64;
 use Data::Dumper;
 
 ##  Inherit from Returned() Class
-use base qw(Returned);
+use base qw| Returned |;
 
 ## Class vars
 our $VERSION;
@@ -64,8 +55,8 @@ sub new
 
   #-- We only support INI
   ##   (Ignored for compatablity with Config::Simple)
-  if( defined $fnam && lc($fnam) eq 'syntax' &&
-      defined $cont && lc($cont) eq 'ini' )
+  if ( defined $fnam && lc($fnam) eq 'syntax' &&
+       defined $cont && lc($cont) eq 'ini' )
   {
     $fnam = undef;
     $cont = undef;
@@ -100,28 +91,28 @@ sub param
   PARAM:
   {
     ## Retrieve list of Params
-    if( ! defined $prop )
+    if ( ! defined $prop )
     {
       $valu = [ keys %$data ];
       last PARAM;
     }
 
     ## Retrieve Param
-    if( ! defined $valu )
+    if ( ! defined $valu )
     {
       $valu = exists $data->{ $prop } ? $data->{ $prop } : undef;
       last PARAM;
     }
 
     ## Save Data ARRAY
-    if( ref $valu eq 'ARRAY' )
+    if ( ref $valu eq 'ARRAY' )
     {
       $data->{ $prop } = $valu;
       last PARAM;
     }
 
     ## Save Data SCALAR
-    if( ! ref $valu )
+    if ( ! ref $valu )
     {
       $data->{ $prop } = $valu;
       last PARAM;
@@ -145,7 +136,8 @@ sub delete
   my $prop = shift;
   my $data = $self->_configData();
 
-  delete $data->{ $prop } if( defined $prop and exists $data->{ $prop } );
+  delete $data->{ $prop }
+      if defined $prop && exists $data->{ $prop };
 
   return $self;
 }
@@ -172,14 +164,14 @@ sub save
   $inif = $self->configFileName unless defined $inif;
 
   ## No place to save
-  unless( defined $inif )
+  unless ( defined $inif )
   {
     $self->error_code(0);
     $self->error_message('WARN: Failed to save undefined configuration file');
   }
 
   ## Open and write
-  if( open my $INI, '>', $inif . '.' . $$ )
+  if ( open my $INI, '>', $inif . '.' . $$ )
   {
   # printf STDERR "# Writing: %s\n", $inif;
     $stat &&= flock( $INI, LOCK_EX );
@@ -223,7 +215,7 @@ sub save
   }
 
   ## Write Issues?
-  unless( $stat )
+  unless ( $stat )
   {
     $self->error_message(sprintf 'WARN: Failed writing configuration file [ %s ] = %s', $inif, $! );
     $self->error_code(0);
@@ -259,16 +251,16 @@ sub read
 
 #   printf STDERR "# Reading: %s\n", $inif ? $inif : 'UNDEF';
 
-    if( open my $INI, '<', $inif )
+    if ( open my $INI, '<', $inif )
     {
       my $section = '';
-      my( $prop, $valu );
+      my ( $prop, $valu );
 
       ## Hold up, a write may be in progress
       ##  (due to our write methodology not really necessary)
       flock( $INI, LOCK_SH );
 
-      while( my $line = <$INI> )
+      while ( my $line = <$INI> )
       {
         chomp $line;
 
@@ -277,7 +269,7 @@ sub read
         next if $line =~ m=^#=;
 
         #-- Capture section
-        if( $line =~ m=^\[= )
+        if ( $line =~ m=^\[= )
         {
           $section  = $line;
           $section  =~ s=[\[\]]==g;
@@ -356,9 +348,9 @@ sub _convertData4Write
     _Encode64( ref $valu eq 'ARRAY' ? $valu : \$valu );
 
     #-- Comma separated list on ARRAY
-    $valu = join ', ', @$valu if( ref $valu eq 'ARRAY' );
+    $valu = join ', ', @$valu if ref $valu eq 'ARRAY';
 
-    if( $prop =~ m=^([\w:-_]+)[.]= )
+    if ( $prop =~ m=^([\w:-_]+)[.]= )
     {
       $section = $1;
       $prop =~ s=^[\w:-_]+[.]==;
@@ -377,18 +369,18 @@ sub _Decode64
 # printf "== %s\n", ref $data;
   DECODE64:
   {
-    if( ref $data eq 'SCALAR' && $$data =~ m=^BASE64= )
+    if ( ref $data eq 'SCALAR' && $$data =~ m=^BASE64= )
     {
       $$data =~ s=(BASE64[(]|[)])==g;
       $$data = decode_base64( $$data );
       last DECODE64;
     }
 
-    if( ref $data eq 'ARRAY' )
+    if ( ref $data eq 'ARRAY' )
     {
       foreach my $i ( 0 .. $#$data )
       {
-        if( $data->[$i] =~ m=^BASE64= )
+        if ( $data->[$i] =~ m=^BASE64= )
         {
           $data->[$i] =~ s=(BASE64[(]|[)])==g;
           $data->[$i] = decode_base64( $data->[$i] );
@@ -408,13 +400,13 @@ sub _Encode64
 
   ENCODE64:
   {
-    if( ref $data eq 'SCALAR' )
+    if ( ref $data eq 'SCALAR' )
     {
       $$data = 'BASE64(' . encode_base64( $$data, '' ) . ')' if $$data =~ m=[,\n]=;
       last ENCODE64;
     }
 
-    if( ref $data eq 'ARRAY' )
+    if ( ref $data eq 'ARRAY' )
     {
       foreach my $i ( 0 .. $#$data )
       {

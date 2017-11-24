@@ -33,16 +33,12 @@ our $VERSION = 1.0;
 
 sub new
 {
-  my $package = shift;
-  my $self    = { };
+  my $self = bless { }, shift;
 
-  $self->{PROPS} = { };
+  $self->{ PROPS } = { };
 
-  bless( $self, $package );
-  return( $self );
+  return $self;
 }
-
-sub DESTROY { }
 
 
 ##
@@ -59,14 +55,14 @@ sub getPropertyList
 {
   my $self = shift;
 
-  return( [ keys %{$self->{PROPS}} ] );
+  return( [ keys %{$self->{ PROPS }} ] );
 }
 
 sub getPropertyListSorted
 {
   my $self = shift;
 
-  return( [ sort keys %{$self->{PROPS}} ] );
+  return( [ sort keys %{$self->{ PROPS }} ] );
 }
 
 
@@ -84,7 +80,7 @@ sub getProperty
   my $self = shift;
   my $prop = shift;
 
-  return( exists $self->{PROPS}{$prop} ? $self->{PROPS}{$prop} : undef );
+  return exists $self->{ PROPS }{ $prop } ? $self->{ PROPS }{ $prop } : undef;
 }
 
 
@@ -104,12 +100,12 @@ sub setProperty
   my $prop = shift;
   my $valu = shift;
 
-  if( defined( $prop ) )
+  if ( defined $prop )
   {
-    $self->{PROPS}{$prop} = $valu;
+    $self->{ PROPS }{ $prop } = $valu;
   }
 
-  return( undef );
+  return;
 }
 
 ##
@@ -126,12 +122,12 @@ sub delProperty
   my $self = shift;
   my $prop = shift;
 
-  if( defined( $prop ) && defined $self->{PROPS}{$prop} )
+  if ( defined $prop && exists $self->{ PROPS }{ $prop } )
   {
-    delete $self->{PROPS}{$prop};
+    delete $self->{ PROPS }{ $prop };
   }
 
-  return( undef );
+  return;
 }
 
 ##
@@ -148,7 +144,7 @@ sub toString
   my $props = $self->getPropertyListSorted();
   my $result;
 
-  foreach my $prop ( @$props )
+  foreach my $prop ( @ $props )
   {
     $result .= sprintf("  %-15s : %s\n", $prop, $self->{PROPS}{$prop} );
   }

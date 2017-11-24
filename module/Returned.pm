@@ -27,7 +27,7 @@ use warnings;
 use Property;
 
 ##  Inherit from Property Class
-use base qw(Property);
+use base qw| Property |;
 
 our $VERSION = 1.0;
 
@@ -59,12 +59,12 @@ sub _init_
   ##   (three possibilities - no combinations!)
   ##
 
-  if( my $cnt = scalar @$props )
+  if ( my $cnt = scalar @$props )
   {
     CHECK_PROP_TYPE:
     {
       ## Array Ref of stuff?
-      if( $cnt == 1 && ref $props->[0] eq 'ARRAY' )
+      if ( $cnt == 1 && ref $props->[0] eq 'ARRAY' )
       {
         ## assume [ error-code, error-msg, debug-message ]
         $self->error_code(    $props->[0][0] );
@@ -76,28 +76,28 @@ sub _init_
 
 
       ## Hash Ref?
-      if( $cnt == 1 && ref $_[0] eq 'HASH' )
+      if ( $cnt == 1 && ref $_[0] eq 'HASH' )
       {
         my $r = $_[0];
 
         ## pull standard items then use remainder as named values.
 
         ## ERROR_CODE
-        if( exists $r->{error_code} ) { $self->error_code( $r->{error_code} ); delete $r->{error_code}; }
-        if( exists $r->{errorcode}  ) { $self->error_code( $r->{errorcode}  ); delete $r->{errorcode};  }
+        if ( exists $r->{error_code} ) { $self->error_code( $r->{error_code} ); delete $r->{error_code}; }
+        if ( exists $r->{errorcode}  ) { $self->error_code( $r->{errorcode}  ); delete $r->{errorcode};  }
 
         ## ERROR_MESSGE
-        if( exists $r->{error_message} ) { $self->error_message( $r->{error_message} ); delete $r->{error_message}; }
-        if( exists $r->{errormessage}  ) { $self->error_message( $r->{errormessage}  ); delete $r->{errormessage};  }
-        if( exists $r->{error_msg}     ) { $self->error_message( $r->{error_msg}     ); delete $r->{error_msg};     }
-        if( exists $r->{errormsg}      ) { $self->error_message( $r->{errormsg}      ); delete $r->{errormsg};      }
+        if ( exists $r->{error_message} ) { $self->error_message( $r->{error_message} ); delete $r->{error_message}; }
+        if ( exists $r->{errormessage}  ) { $self->error_message( $r->{errormessage}  ); delete $r->{errormessage};  }
+        if ( exists $r->{error_msg}     ) { $self->error_message( $r->{error_msg}     ); delete $r->{error_msg};     }
+        if ( exists $r->{errormsg}      ) { $self->error_message( $r->{errormsg}      ); delete $r->{errormsg};      }
 
         ## DEBUG
-        if( exists $r->{debug}         ) { $self->debug_message( $r->{debug}         ); delete $r->{debug};         }
-        if( exists $r->{debugmsg}      ) { $self->debug_message( $r->{debugmsg}      ); delete $r->{debugmsg};      }
-        if( exists $r->{debug_msg}     ) { $self->debug_message( $r->{debug_msg}     ); delete $r->{debug_msg};     }
-        if( exists $r->{debugmessage}  ) { $self->debug_message( $r->{debugmessage}  ); delete $r->{debugmessage};  }
-        if( exists $r->{debug_message} ) { $self->debug_message( $r->{debug_message} ); delete $r->{debug_message}; }
+        if ( exists $r->{debug}         ) { $self->debug_message( $r->{debug}         ); delete $r->{debug};         }
+        if ( exists $r->{debugmsg}      ) { $self->debug_message( $r->{debugmsg}      ); delete $r->{debugmsg};      }
+        if ( exists $r->{debug_msg}     ) { $self->debug_message( $r->{debug_msg}     ); delete $r->{debug_msg};     }
+        if ( exists $r->{debugmessage}  ) { $self->debug_message( $r->{debugmessage}  ); delete $r->{debugmessage};  }
+        if ( exists $r->{debug_message} ) { $self->debug_message( $r->{debug_message} ); delete $r->{debug_message}; }
 
         ## Everything Else is named!
         foreach my $prop ( keys %$r ) { $self->setProperty( $prop, $r->{ $prop } ); }
@@ -149,7 +149,7 @@ sub debug_prune
 
   $self->reset_errors;
 
-  if( $size >= $len )
+  if ( $size >= $len )
   {
     $self->reset_debugs;
   }
@@ -180,8 +180,10 @@ sub _addbug { push @$DEBUGMSGS, $_[1]; return; }
 
 sub _setget
 {
-  my( $self, $prop, $val ) = @_;
-  $self->setProperty( $prop, $val ) if( defined $val );
+  my ( $self, $prop, $val ) = @_;
+
+  defined $val && $self->setProperty( $prop, $val );
+
   return $self->getProperty( $prop );
 }
 

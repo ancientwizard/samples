@@ -17,7 +17,7 @@ package platform;
 use strict;
 use warnings;
 use Carp;
-use base qw{Property};
+use base qw| Property |;
 
 our $VERSION = 1.0;
 
@@ -25,12 +25,12 @@ my $isUNIX;
 my $isWinTEL;
 
 sub BEGIN {
-  if( -d '/var' ) { $isUNIX = 1;     $isWinTEL = undef; }
-  if( -d 'C:\\' ) { $isUNIX = undef; $isWinTEL = 1; }
+  if ( -d '/var' ) { $isUNIX = 1;     $isWinTEL = undef; }
+  if ( -d 'C:\\' ) { $isUNIX = undef; $isWinTEL = 1; }
 
-  unless( defined $isUNIX || defined $isWinTEL )
+  unless ( defined $isUNIX || defined $isWinTEL )
   {
-    croak('Could not determine if this system is UNIX or WinTEL.');
+    croak( 'Could not determine if this system is UNIX or WinTEL.' );
   }
 }
 
@@ -42,13 +42,8 @@ sub BEGIN {
 
 sub new
 {
-  my $package = shift;
-  my $self    = $package->SUPER::new();
-
-  return( $self );
+  return (shift)->SUPER::new();
 }
-
-sub DESTROY { }
 
 
 ##

@@ -3,7 +3,7 @@
 
   - POD              ->> in Perl code, modules etc
   - Application      ->> bin/zonetool.pl
-  - Simple .pm       ->> module/
+  - Sample modules   ->> module/
   - Module test code ->> acceptance/ (see ./run_all)
   - partial code     ->> segments/
 

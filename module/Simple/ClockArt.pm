@@ -22,7 +22,7 @@ local $Data::Dumper::Indent = 1;
 
 my $scale = 15;
 
-print Simple::ClockArt::Header->new(
+print Simple::ClockArt::Dial->new(
     -TITLE  => 'Timer Map Scale:' . $scale
   , -SCALE  => $scale
   , -MARKUP =>
@@ -95,15 +95,6 @@ sub merge
       my $row1 = [ split '', ( $rowA = shift @ $list )];
       my $row2 = [ split '', ( $rowB = shift @ $list )];
 
-      VIEW:
-      {
-        last VIEW if 1;
-        local $Data::Dumper::Indent = 0;
-        local $Data::Dumper::Terse  = 1;
-        print Dumper( $row1 ),"\n";
-        print Dumper( $row2 ),"\n";
-      }
-
       eval
       {
         while ( scalar @ $row1 || scalar @ $row2 )
@@ -117,20 +108,17 @@ sub merge
             || ( $_a && ! $_b ? $_a : $_b );
         }
 
-      # printf "# merged\n";
         push @ $merged, join '', @ $rowm;
       }
       ||
       do
       {
-      # printf "# %s", $@;
         push @ $merged, $rowA, $rowB;
       };
 
       last MERGE;
     }
 
-  # @ $list = sort { $b cmp $a } @ $list;
     push @ $merged, shift @ $list ;
 
     while ( @ $list )
@@ -271,7 +259,7 @@ sub toString
 }
 
 
-package Simple::ClockArt::Header;
+package Simple::ClockArt::Dial;
 
 use strict;
 use warnings;
@@ -318,7 +306,7 @@ sub toString
   # push @ $head, '' if $self->title;
     push @ $head, ' ' . join ' ' x ($scale - 1), ((' ') x 10, (1) x 10, (2) x 4 );
     push @ $head, ' ' . join ' ' x ($scale - 1), ((0 .. 9) x 2, 0 .. 3 );
-    $str .= ' ' . (( $scale == 6 ? '+--~--' : '+-~-' ) x 24 ). "\n";
+    $str .= ' ' . (( $scale == 6 ? '+--~--' : '+-~-' ) x 24 ) . "\n";
 
     last HEADER unless $self->markup;
 

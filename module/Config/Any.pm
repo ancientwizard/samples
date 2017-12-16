@@ -43,11 +43,11 @@ use Data::Dumper;
 use Sys::Hostname;
 use Config::SimpleII;
 use DBD::mysql;
-use POSIX qw(:signal_h);
+use POSIX qw| :signal_h |;
 
 
 ##  Inherit from Returned Class
-use base qw(Returned);
+use base qw| Returned |;
 
 
 ##
@@ -146,7 +146,7 @@ sub new
   #--  will be stored under (empty/undef == default/global)
   $self->module( shift );
 
-  unless( defined $C_SIMPLE )
+  unless ( defined $C_SIMPLE )
   {
     #-- Load existing ini file OR start a new one
     $C_SIMPLE = ( defined $C_PATHNAME && -f $C_PATHNAME )
@@ -156,7 +156,7 @@ sub new
 
   #-- Unable to open Existing Configuration
   #--  (runing with configuration file disabled - in memory only)
-  unless( $C_SIMPLE )
+  unless ( $C_SIMPLE )
   {
     $self->error_message("Unable to open ($C_PATHNAME) - " . $!);
     $C_SIMPLE = Config::SimpleII->new( syntax => 'ini' );
@@ -180,7 +180,7 @@ sub DESTROY
   --$C_COUNT;  # Instance Count
 
   #-- File SAVE
-  if( $C_SIMPLE && $C_COUNT==0 && $S_CHANGED )
+  if ( $C_SIMPLE && $C_COUNT==0 && $S_CHANGED )
   {
     $C_SIMPLE->param( 'TIMESTAMP', $D_TS );
 
@@ -188,23 +188,23 @@ sub DESTROY
     #--  this will keep us from destroying an existing ini
     #--  file if we have a permissions or low disk space issue.
     #--  (we dont want to write a partial or empty ini file)
-    if( $C_PATHNAME )
+    if ( $C_PATHNAME )
     {
       my $F_TEMP = $C_PATHNAME . '.tmp';
 
-      if( $C_SIMPLE->write( $F_TEMP ))
+      if ( $C_SIMPLE->write( $F_TEMP ))
       {
         rename $F_TEMP, $C_PATHNAME;
       }
       else
       {
         unlink $F_TEMP if -f $F_TEMP;
-        (Returned->new)->error_message("Unable to write ($C_PATHNAME) - " . $!);
+        Returned->new->error_message("Unable to write ($C_PATHNAME) - " . $!);
       }
     }
     else
     {
-      (Returned->new)->error_message("Unable to write configuration file; file is undefined.");
+      Returned->new->error_message("Unable to write configuration file; file is undefined.");
     }
   }
 
@@ -263,23 +263,23 @@ sub openDB
     sigaction( SIGALRM, $oldaction );
 
     #-- Oops failed to get a DB connection?
-    unless( $M_CONN )
+    unless ( $M_CONN )
     {
       $timer = time - $timer;
       chomp( $@ );
-      (Returned->new)->debug_message((DBI::errstr() ? DBI::errstr() : $@)  . " (timeout=${timer} seconds)\n");
+      Returned->new->debug_message((DBI::errstr() ? DBI::errstr() : $@)  . " (timeout=${timer} seconds)\n");
     }
   }
 
   #-- Create Required Table IF NOT EXISTS
-  if( $M_CONN )
+  if ( $M_CONN )
   {
     $M_CONN->do( $M_SQL->{'SQL_CREATE_TABLE'});
     $M_ENABLED = 1;
   }
 
   #-- Configure / Check UUID
-  (Config::Any->new)->_InitUUID;
+  Config::Any->new->_InitUUID;
 
   #-- No actual "Errors", handle things internally
   return $M_CONN ? 1 : -1;
@@ -293,7 +293,7 @@ sub closeDB
   my $rslt = 1;
   my $timo = shift || $M_TIMEOUT;
 
-  if( $M_CONN )
+  if ( $M_CONN )
   {
     my $timer  = time;
     my $action = POSIX::SigAction->new(
@@ -320,9 +320,9 @@ sub closeDB
     $M_CONN    = undef;
     $timer     = time - $timer;
 
-    unless( $rslt == 1 )
+    unless ( $rslt == 1 )
     {
-      (Returned->new)->debug_message((DBI::errstr() ? DBI::errstr() : $@)  . " (timeout=${timer} seconds - $rslt)\n");
+      Returned->new->debug_message((DBI::errstr() ? DBI::errstr() : $@)  . " (timeout=${timer} seconds - $rslt)\n");
       $rslt = -1;
     }
   }
@@ -444,7 +444,7 @@ sub _saveMySQL
 
   return $rslt unless $M_ENABLED;
 
-# (Returned->new)->debug_message( sprintf "ret(%s), rows(%d), flds(%d)\n", $ste, $sth->rows, $sth->{'NUM_OF_FIELDS'} );
+# Returned->new->debug_message( sprintf "ret(%s), rows(%d), flds(%d)\n", $ste, $sth->rows, $sth->{'NUM_OF_FIELDS'} );
 
   UPDATE_METHOD:
   {
@@ -452,13 +452,13 @@ sub _saveMySQL
 
     #-- Single Row (use UPDATE)
 
-    if( $rows == 1 )
+    if ( $rows == 1 )
     {
       my $aref = $sth->fetchrow_hashref;
       my $sthu;
 
       #-- No update to be made (no difference)
-      last UPDATE_METHOD if( defined $aref->{'valu'} && $valu eq $aref->{'valu'} );
+      last UPDATE_METHOD if ( defined $aref->{'valu'} && $valu eq $aref->{'valu'} );
 
       $sthu = $M_CONN->prepare( $M_SQL->{'SQL_UPDATE'} );
       $ste  = _timed_sql_execute( $sthu, [ $valu, $S_TARGET, $modu, $prop ], 'UDPATE' );
@@ -468,7 +468,7 @@ sub _saveMySQL
     #-- Multi Rows (use DELETE,INSERT)
     #--  (simpifies updating - performance is not a concern)
 
-    if( $rows )
+    if ( $rows )
     {
       $sth = $M_CONN->prepare( $M_SQL->{'SQL_DELETE'} );
       $ste = _timed_sql_execute( $sth, [ $S_TARGET, $modu, $prop ], 'DELETE' );
@@ -479,7 +479,7 @@ sub _saveMySQL
 
     $sth = $M_CONN->prepare( $M_SQL->{'SQL_INSERT'} );
 
-    if( ref $valu eq 'ARRAY' )
+    if ( ref $valu eq 'ARRAY' )
     {
       my $indx = 0;
 
@@ -495,7 +495,7 @@ sub _saveMySQL
     $ste = _timed_sql_execute( $sth, [ $S_TARGET, $modu, $prop, undef, $valu ], 'INSERT' );
   }
 
-  if( defined $sth )
+  if ( defined $sth )
   {
     $sth->finish;
     $sth = undef;
@@ -549,14 +549,14 @@ sub _readMySQL
 
   $errs++ unless $ste;
 
-# (Returned->new)->debug_message( sprintf "ret(%s), rows(%d), flds(%d)\n", $ste, $sth->rows, $sth->{'NUM_OF_FIELDS'} );
+# Returned->new->debug_message( sprintf "ret(%s), rows(%d), flds(%d)\n", $ste, $sth->rows, $sth->{'NUM_OF_FIELDS'} );
 
   return unless $sth;
   return unless $sth->rows;
 
   $rslt = [];
 
-  while( my $aref = $sth->fetchrow_hashref )
+  while ( my $aref = $sth->fetchrow_hashref )
   {
     #-- Return just the one row
     #-- Place multi rows on array ref
@@ -590,21 +590,21 @@ sub _InitUUID
   SETUP_UUID:
   {
     #-- UUID Set and matches
-    if( defined $uuid_mySQL && defined $uuid_cfile && $uuid_cfile eq $uuid_mySQL )
+    if ( defined $uuid_mySQL && defined $uuid_cfile && $uuid_cfile eq $uuid_mySQL )
     {
       $D_UUID = $uuid_mySQL unless defined $D_UUID;
       last SETUP_UUID;
     }
 
     #-- UUID Known But no cfile
-    if( defined $uuid_cfile && ! $C_SIMPLE )
+    if ( defined $uuid_cfile && ! $C_SIMPLE )
     {
       $D_UUID = $uuid_mySQL unless defined $D_UUID;
       last SETUP_UUID;
     }
 
     #-- UUID Known But no mySQL
-    if( defined $uuid_cfile && ! $M_ENABLED )
+    if ( defined $uuid_cfile && ! $M_ENABLED )
     {
       $D_UUID = $uuid_cfile unless defined $D_UUID;
       last SETUP_UUID;
@@ -612,7 +612,7 @@ sub _InitUUID
 
     #-- UUID Does not Match! (This is Ugly)
     #-- (should not be possible)
-    if( defined $uuid_mySQL && defined $uuid_cfile && $uuid_cfile ne $uuid_mySQL )
+    if ( defined $uuid_mySQL && defined $uuid_cfile && $uuid_cfile ne $uuid_mySQL )
     {
       $D_UUID = $uuid_mySQL unless defined $D_UUID;
       $self->error_message("UUID Mismatch cfile(${uuid_cfile})\n");
@@ -622,7 +622,7 @@ sub _InitUUID
 
     #-- Create UUID
     #-- (Based on hostname which should be unique and predictable)
-    $D_UUID = (Data::UUID->new)->create_from_name_str( NameSpace_DNS, hostname());
+    $D_UUID = Data::UUID->new->create_from_name_str( NameSpace_DNS, hostname());
   }
 
   #-- ensure sync
@@ -648,7 +648,7 @@ sub _ensureSynced
   my $ts_mysql = _readMySQL( '__DEFAULT__', 'TIMESTAMP' );
   my $ts_cfile = $C_SIMPLE ? $C_SIMPLE->param( 'TIMESTAMP' ) : undef;
 
-  if(( defined $ts_mysql && defined $ts_cfile && $ts_mysql <=> $ts_cfile ) || $S_CLOSED )
+  if (( defined $ts_mysql && defined $ts_cfile && $ts_mysql <=> $ts_cfile ) || $S_CLOSED )
   {
     $ts_mysql = 0 unless $ts_mysql;
     $ts_cfile = 0 unless $ts_cfile;
@@ -711,10 +711,10 @@ sub _timed_sql_execute
     sigaction( SIGALRM, $oldaction );
     $timer = time - $timer;
 
-    last TRY_SQL if( defined $sqlh && defined $ste );
+    last TRY_SQL if ( defined $sqlh && defined $ste );
 
     chomp( $@ );
-    (Returned->new)->debug_message((DBI::errstr() ? DBI::errstr() : $@)  . " (timeout=${timer} seconds)\n");
+    Returned->new->debug_message((DBI::errstr() ? DBI::errstr() : $@)  . " (timeout=${timer} seconds)\n");
 
     #-- On error stop using this resource
     #-- Reconnect again later, mark the CLOSED flag to indicate it was working.
@@ -740,7 +740,7 @@ sub _sync2mysql
   return unless $M_ENABLED;
   return unless $C_SIMPLE;
 
-  (Returned->new)->debug_message("Resyncing remote MySQL\n");
+  Returned->new->debug_message("Resyncing remote MySQL\n");
 
   #-- Prune from mySQL
   my $sth = $M_CONN->prepare( $M_SQL->{ 'SQL_PRUNE' } );
@@ -761,7 +761,7 @@ sub _sync2mysql
   }
 
   # No longer Closed
-  $S_CLOSED = 0 if( $M_ENABLED && $C_SIMPLE );
+  $S_CLOSED = 0 if $M_ENABLED && $C_SIMPLE;
 
   return;
 }
@@ -781,7 +781,7 @@ sub _sync2cfile
   return unless $M_ENABLED;
   return unless $C_SIMPLE;
 
-  (Returned->new)->debug_message("Resyncing local Conf-File\n");
+  Returned->new->debug_message("Resyncing local Conf-File\n");
 
   #-- Get Data From MySQL
   my $sth = $M_CONN->prepare( $M_SQL->{ 'SQL_SELECT_ALL' } );
@@ -789,11 +789,11 @@ sub _sync2cfile
 
   my $data = {};
 
-  while( my $row = $sth->fetchrow_hashref )
+  while ( my $row = $sth->fetchrow_hashref )
   {
     my $modu = $row->{'module'} eq '__DEFAULT__' ? 'default.' : $row->{'module'} . '.';
 
-    if( defined $row->{ 'indx' } )
+    if ( defined $row->{ 'indx' } )
     {
       ${$data->{$modu . $row->{prop}}}[$row->{'indx'}] = $row->{'valu'};
     }
@@ -820,35 +820,35 @@ sub _sync2cfile
   }
 
   #-- File SAVE
-  if( $C_SIMPLE )
+  if ( $C_SIMPLE )
   {
     $C_SIMPLE->param( 'TIMESTAMP', $D_TS );
 
     #-- write configuration file (write & rename)
     #--  this will keep us from destroying an existing ini
     #--  file if we have a permissions or low disk space issue.
-    if( $C_PATHNAME )
+    if ( $C_PATHNAME )
     {
       my $F_TEMP = $C_PATHNAME . '.tmp';
 
-      if( $C_SIMPLE->write( $F_TEMP ))
+      if ( $C_SIMPLE->write( $F_TEMP ))
       {
         rename $F_TEMP, $C_PATHNAME;
       }
       else
       {
         unlink $F_TEMP if -f $F_TEMP;
-        (Returned->new)->error_message("Unable to write ($C_PATHNAME) - " . $!);
+        Returned->new->error_message("Unable to write ($C_PATHNAME) - " . $!);
       }
     }
     else
     {
-      (Returned->new)->error_message("Unable to write configuration file; file is undefined.");
+      Returned->new->error_message("Unable to write configuration file; file is undefined.");
     }
   }
 
   # No longer Closed
-  $S_CLOSED = 0 if( $M_ENABLED && $C_SIMPLE );
+  $S_CLOSED = 0 if $M_ENABLED && $C_SIMPLE;
 
   return;
 }
@@ -931,7 +931,7 @@ Maintains a local "file" based copy.
  $conf1->param('Monkey','See');
  $conf2->param('Monkey','Do');
  
- if( $conf1->param('Monkey') ne $conf2->param('Monkey'))
+ if ( $conf1->param('Monkey') ne $conf2->param('Monkey'))
  {
    print "That's Correct these are not the same Property!\n";
    print "They are in two different modules (configuration blocks)\n";

@@ -14,7 +14,11 @@
 ##    DATE: 2014-Jan
 ##
 ##  CHANGES:
-##    2014-Jan-21 VICB - First Release
+##    2017-12-19 VICB - Style freshened
+##    2014-01-21 VICB - First Release
+##
+##  PERLCRITIC:
+##    no critic [Subroutines::ProhibitBuiltinHomonyms]
 ##
 
 package Config::SimpleII;
@@ -30,15 +34,8 @@ use Data::Dumper;
 use base qw| Returned |;
 
 ## Class vars
-our $VERSION;
-our $PKGNAME;
-
-sub BEGIN
-{
-  #-- Set Class defaults during compile
-  $VERSION = 0.1;
-  $PKGNAME = __PACKAGE__;
-}
+our $VERSION = 0.1;
+our $PKGNAME = __PACKAGE__;
 
 
 ##
@@ -164,16 +161,17 @@ sub save
   $inif = $self->configFileName unless defined $inif;
 
   ## No place to save
-  unless ( defined $inif )
+  if ( ! defined $inif )
   {
     $self->error_code(0);
     $self->error_message('WARN: Failed to save undefined configuration file');
   }
 
   ## Open and write
+  ## no critic [InputOutput::RequireBriefOpen]
+  ##  (Brief should mean "is with-in sight!")
   if ( open my $INI, '>', $inif . '.' . $$ )
   {
-  # printf STDERR "# Writing: %s\n", $inif;
     $stat &&= flock( $INI, LOCK_EX );
     $stat &&= printf $INI "##\n";
     $stat &&= printf $INI "## Written by Config::SimpleII\n";
@@ -215,7 +213,7 @@ sub save
   }
 
   ## Write Issues?
-  unless ( $stat )
+  if ( ! $stat )
   {
     $self->error_message(sprintf 'WARN: Failed writing configuration file [ %s ] = %s', $inif, $! );
     $self->error_code(0);
@@ -223,12 +221,12 @@ sub save
 
   ## Remove temp version of the configuration file
   ##  (on some kinds of errors the file still exists and is expected to be broken)
-  unlink $inif . '.' . $$ if -f $inif . '.' . $$;
+  unlink $inif . '.' . $$;
 
   return $self;
 }
 
-sub write { my $self = shift; return $self->save(@_); }
+sub write { return (shift)->save(@_) }
 
 ##
 ## Loads configuration file into a hash.
@@ -249,8 +247,8 @@ sub read
     last READ unless defined $inif;
     last READ unless -f $inif;
 
-#   printf STDERR "# Reading: %s\n", $inif ? $inif : 'UNDEF';
-
+    ## no critic [InputOutput::RequireBriefOpen]
+    ##  (but I dont want a slurpee today!)
     if ( open my $INI, '<', $inif )
     {
       my $section = '';
@@ -266,29 +264,29 @@ sub read
 
         #-- Toss non-data
         next if $line eq '';
-        next if $line =~ m=^#=;
+        next if $line =~ m=^[#]=x;
 
         #-- Capture section
-        if ( $line =~ m=^\[= )
+        if ( $line =~ m=^\[=x )
         {
           $section  = $line;
-          $section  =~ s=[\[\]]==g;
+          $section  =~ s=[\[\]]==xg;
           $section  = ''  if $section eq 'default';
           $section .= '.' if length $section;
           next;
         }
 
         #-- Toss other junk
-        next unless $line =~ m=^\w=;
+        next unless $line =~ m=^\w=x;
 
         #-- Handle white space around '='
-        $line =~ s/ *= */=/;
+        $line =~ s/\s*=\s*/=/x;
 
         #-- Capture prop & value pair
-        ( $prop, $valu ) = split '=', $line, 2;
+        ( $prop, $valu ) = split m/[=]/x, $line, 2;
 
         #-- Break coma list into array
-        $valu = [ split m=, *=, $valu ] if $valu =~ m=,=;
+        $valu = [ split m=,\s*=x, $valu ] if $valu =~ m=,=x;
 
         #-- Decode BASE64 strings if any
         _Decode64( ref $valu eq 'ARRAY' ? $valu : \$valu );
@@ -296,7 +294,7 @@ sub read
         #-- Store
         $data->{ $section . $prop } = $valu;
       }
-   
+
       last READ;
     }
 
@@ -350,10 +348,10 @@ sub _convertData4Write
     #-- Comma separated list on ARRAY
     $valu = join ', ', @$valu if ref $valu eq 'ARRAY';
 
-    if ( $prop =~ m=^([\w:-_]+)[.]= )
+    if ( $prop =~ m=^([\w:-_]+)[.]=x )
     {
       $section = $1;
-      $prop =~ s=^[\w:-_]+[.]==;
+      $prop =~ s=^[\w:-_]+[.]==x;
     }
 
     $wdat->{ $section }{ $prop } = $valu;
@@ -369,9 +367,9 @@ sub _Decode64
 # printf "== %s\n", ref $data;
   DECODE64:
   {
-    if ( ref $data eq 'SCALAR' && $$data =~ m=^BASE64= )
+    if ( ref $data eq 'SCALAR' && $$data =~ m=^BASE64=x )
     {
-      $$data =~ s=(BASE64[(]|[)])==g;
+      $$data =~ s=(BASE64[(]|[)])==xg;
       $$data = decode_base64( $$data );
       last DECODE64;
     }
@@ -380,9 +378,9 @@ sub _Decode64
     {
       foreach my $i ( 0 .. $#$data )
       {
-        if ( $data->[$i] =~ m=^BASE64= )
+        if ( $data->[$i] =~ m=^BASE64=x )
         {
-          $data->[$i] =~ s=(BASE64[(]|[)])==g;
+          $data->[$i] =~ s=(BASE64[(]|[)])==xg;
           $data->[$i] = decode_base64( $data->[$i] );
         }
       }
@@ -402,7 +400,7 @@ sub _Encode64
   {
     if ( ref $data eq 'SCALAR' )
     {
-      $$data = 'BASE64(' . encode_base64( $$data, '' ) . ')' if $$data =~ m=[,\n]=;
+      $$data = 'BASE64(' . encode_base64( $$data, '' ) . ')' if $$data =~ m=[,\n]=x;
       last ENCODE64;
     }
 
@@ -411,7 +409,7 @@ sub _Encode64
       foreach my $i ( 0 .. $#$data )
       {
         $data->[$i] = 'BASE64(' . encode_base64( $data->[$i], '' ) . ')'
-            if $data->[$i] =~ m=[,\n]=;
+            if $data->[$i] =~ m=[,\n]=x;
       }
 
       last ENCODE64;
@@ -453,7 +451,7 @@ This package provides a Pure Perl [INI] configuration file OO interface with the
 
 =head1 USAGE & Examples
 
-=head1 SUBROUTINES AND METHODS
+=head1 SUBROUTINES/METHODS
 
 =over 4
 

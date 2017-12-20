@@ -1,9 +1,14 @@
 
 ## DESCRIPTION: Simple::ClockArt
 ##    An unfinished work for illustrative purposes only
-##    Only a cpuple of sub classes have been stubbed out
+##    Only a couple of sub classes have been stubbed out
+##    and the primary class a "test" run to illustrate the sub class usage.
 ##  Run as $ perl -MSimple::ClockArt -e ""
 ##
+
+##  PERLCRITIC:
+##    no critic [Documentation::RequirePodSections]
+##      (one day I'll finish this work, including the POD)
 
 package Simple::ClockArt;
 
@@ -70,7 +75,6 @@ print ' ', $_, "\n" for $PKGNAME->merge(
   )->toString
 );
 
-exit 0;
 
 sub merge
 {
@@ -92,8 +96,8 @@ sub merge
     {
       my ( $rowA, $rowB );
       my $rowm = [];
-      my $row1 = [ split '', ( $rowA = shift @ $list )];
-      my $row2 = [ split '', ( $rowB = shift @ $list )];
+      my $row1 = [ split m==x, ( $rowA = shift @ $list )];
+      my $row2 = [ split m==x, ( $rowB = shift @ $list )];
 
       eval
       {
@@ -134,6 +138,10 @@ sub merge
 ## ---------------------------------------------------------------------------
 ##  Helper Class
 
+## no critic [Modules::ProhibitMultiplePackages]
+## no critic [Variables::ProhibitReusedNames]
+##   Critic would'nt know unpacking if it was hit with a suitcase!
+
 package Simple::ClockArt::Timer;
 
 use strict;
@@ -157,8 +165,8 @@ sub new
   $self->start(     $args->{ -START    } // '' );
   $self->duration(  $args->{ -DURATION } // '' );
 
-  my ( $shr, $smn ) = split '[:]', $self->start;
-  my ( $dhr, $dmn ) = split '[:]', $self->duration;
+  my ( $shr, $smn ) = split m=:=x, $self->start;
+  my ( $dhr, $dmn ) = split m=:=x, $self->duration;
 
   ## Exceptions
   croak sprintf '%s (L#%d) - Unnamed timer, use: -NAME => Name'
@@ -168,13 +176,13 @@ sub new
   croak sprintf '%s (L#%d) - Invalid timer-start, use: -START => HH::MM'
           , $PKGNAME, __LINE__
         unless defined $self->start
-            && $self->start =~ m=^[0-9]{2}[:][0-9]{2}$=x
+            && $self->start =~ m=^[0-9]{2}:[0-9]{2}$=x
             && $shr >= 0 && $shr <= 23 && $smn >= 0 && $smn <= 59;
 
   croak sprintf '%s (L#%d) - Invalid timer-duration, use: -DURATION => HH:MM'
           , $PKGNAME, __LINE__
         unless defined $self->duration
-            && $self->duration =~ m=[0-9]{2}[:][0-9]{2}$=x
+            && $self->duration =~ m=[0-9]{2}:[0-9]{2}$=x
             && $dhr >= 0 && $dhr <= 23 && $dmn >= 0 && $dmn <= 59;
 
   croak sprintf '%s (L#%d) - Invalid time-scale, use: -SCALE => 10 | 15'
@@ -196,8 +204,8 @@ sub toString
   my $name  = $self->name;
   my $scale = 60 / $self->scale;
 
-  my ($dura_hr,$dura_mn) = split ':', $self->duration;
-  my ($strt_hr,$strt_mn) = split ':', $self->start;
+  my ($dura_hr,$dura_mn) = split m=:=x, $self->duration;
+  my ($strt_hr,$strt_mn) = split m=:=x, $self->start;
   my ($str,    $buf    ) = ('','');
 
   $str = '-' x ( $dura_hr * $scale + $dura_mn / 60 * $scale );

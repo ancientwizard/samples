@@ -14,8 +14,9 @@
 ##    DATE: 2009-Apr
 ##
 ##  Changes:
-##    2012-Apr-03 VICB - Corrected bug in _decode() method.
-##    2009-Apr-xx VICB - First Release
+##    2017-12-19 VICB - Style freshened
+##    2012-04-03 VICB - Corrected bug in _decode() method.
+##    2009-04-xx VICB - First Release
 ##
 
 package Base64;

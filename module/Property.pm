@@ -13,7 +13,8 @@
 ##    DATE: 2004
 ##
 ##  Changes:
-##    2009-Jan-09 VICB - clear Severity 3 messages from perlcritic
+##    2017-12-19 VICB - Style freshened
+##    2009-01-09 VICB - clear Severity 3 messages from perlcritic
 ##
 
 package Property;
@@ -53,16 +54,12 @@ sub new
 
 sub getPropertyList
 {
-  my $self = shift;
-
-  return( [ keys %{$self->{ PROPS }} ] );
+  return [ keys %{ (shift)->{ PROPS }} ];
 }
 
 sub getPropertyListSorted
 {
-  my $self = shift;
-
-  return( [ sort keys %{$self->{ PROPS }} ] );
+  return [ sort keys %{ (shift)->{ PROPS }} ];
 }
 
 
@@ -105,7 +102,7 @@ sub setProperty
     $self->{ PROPS }{ $prop } = $valu;
   }
 
-  return;
+  return $valu;
 }
 
 ##
@@ -146,7 +143,7 @@ sub toString
 
   foreach my $prop ( @ $props )
   {
-    $result .= sprintf("  %-15s : %s\n", $prop, $self->{PROPS}{$prop} );
+    $result .= sprintf "  %-15s : %s\n", $prop, $self->{ PROPS }{ $prop };
   }
 
   return $result;
@@ -272,7 +269,7 @@ None known
 
 =head1 AUTHOR
 
-V Burns (ancient.wizard@verizon.net)
+V Burns ( ancient dot wizard at verizon dot net )
 
 =head1 BUGS AND LIMITATIONS
 

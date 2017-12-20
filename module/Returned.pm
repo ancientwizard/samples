@@ -11,13 +11,14 @@
 ##    DATE: 2009-Apr
 ##
 ##  Changes:
-##    2011-May-19 VICB - Add support for pruning and clearing stored debug
+##    2017-12-19 VICB - Style freshened
+##    2011-04-19 VICB - Add support for pruning and clearing stored debug
 ##                       traceback messages. During huge jobs issues can arise
 ##                       when the Perl run's out of memory.
 ##                        added - debug_prune(nn)
 ##                        doc'd - reset_errors()
 ##                        doc'd - reset_debugs()
-##    2009-Apr-xx VICB - First Release
+##    2009-04-xx VICB - First Release
 ##
 
 package Returned;
@@ -48,8 +49,8 @@ sub new
 
 sub _init_
 {
-  my $self  = shift(@_);
-  my $props = \@_;
+  my $self  = shift;
+  my $props = [ @_ ];
 
   ##  defaults
   $self->error_code( 0 );
@@ -59,7 +60,7 @@ sub _init_
   ##   (three possibilities - no combinations!)
   ##
 
-  if ( my $cnt = scalar @$props )
+  if ( my $cnt = scalar @ $props )
   {
     CHECK_PROP_TYPE:
     {
@@ -130,22 +131,22 @@ sub reset_debugs  { return $DEBUGMSGS = []; }
 
 sub isOkay
 {
-  my $self = shift(@_);
+  my $self = shift;
 
-  return( defined $self->error_code && $self->error_code );
+  return $self->error_code ? 1 : 0;
 }
 
-sub debug_capture_off { return $DEBUGCAPT = 0; }
-sub debug_capture_on  { return $DEBUGCAPT = 1; }
+sub debug_capture_off { return $DEBUGCAPT = 0 }
+sub debug_capture_on  { return $DEBUGCAPT = 1 }
 
 sub debug_prune
 {
-  my $self = shift(@_);
-  my $size = shift(@_);
-  my $len  = scalar @$DEBUGMSGS;
+  my $self = shift;
+  my $size = shift;
+  my $len  = scalar @ $DEBUGMSGS;
 
-  $size = 0 unless( defined $size );
-  $size = 0 unless( $size =~ m/^[0-9]+$/ );
+  $size = 0 unless defined $size;
+  $size = 0 unless $size =~ m/^[0-9]+$/x;
 
   $self->reset_errors;
 
@@ -155,7 +156,7 @@ sub debug_prune
   }
   else
   {
-    @$DEBUGMSGS = @$DEBUGMSGS[ $len-$size .. $len-1 ];
+    @ $DEBUGMSGS = @ $DEBUGMSGS[ $len-$size .. $len-1 ];
   }
 
   return;
@@ -171,20 +172,20 @@ sub debug_prune
 sub _adderr
 {
   $_[0]->_addbug($_[1]);
-  push @$ERRORMSGS, $_[1];
+  push @ $ERRORMSGS, $_[1];
   return;
 }
 
 ## DEBUG Message are pushed on the DEBUG message array.
-sub _addbug { push @$DEBUGMSGS, $_[1]; return; }
+sub _addbug { push @ $DEBUGMSGS, $_[1]; return; }
 
 sub _setget
 {
   my ( $self, $prop, $val ) = @_;
 
-  defined $val && $self->setProperty( $prop, $val );
-
-  return $self->getProperty( $prop );
+  return defined $val
+    ? $self->setProperty( $prop, $val )
+    : $self->getProperty( $prop );
 }
 
 

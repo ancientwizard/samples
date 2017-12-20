@@ -1,0 +1,35 @@
+
+##
+## PERCRITIC: is excellent but, like all good things moderation is key
+##
+
+## Not Helpful, Perl Critic items
+[-CodeLayout::RequireTidyCode]
+[-CodeLayout::ProhibitParensWithBuiltins]
+[-ValuesAndExpressions::RequireInterpolationOfMetachars]
+[-ValuesAndExpressions::ProhibitMagicNumbers]
+[-References::ProhibitDoubleSigils]
+[-ControlStructures::ProhibitPostfixControls]
+[-ValuesAndExpressions::ProhibitEmptyQuotes]
+[-ValuesAndExpressions::ProhibitNoisyQuotes]
+[-NamingConventions::Capitalization]
+[-RegularExpressions::ProhibitFixedStringMatches]
+[-RegularExpressions::ProhibitUnusualDelimiters]
+[-RegularExpressions::RequireDotMatchAnything]
+[-RegularExpressions::RequireLineBoundaryMatching]
+[-ControlStructures::ProhibitNegativeExpressionsInUnlessAndUntilConditions]
+[-ValuesAndExpressions::ProhibitNoisyQuotes]
+[-Subroutines::RequireArgUnpacking]
+[-InputOutput::RequireCheckedSyscalls]
+[-Modules::ProhibitExcessMainComplexity]
+[-Variables::ProhibitPunctuationVars]
+[-InputOutput::RequireBracedFileHandleWithPrint]
+
+## \d is TMI when [0-9] is perfect
+[-RegularExpressions::ProhibitEnumeratedClasses]
+
+## Reconfigure
+[Subroutines::ProhibitExcessComplexity]
+max_mccabe = 35
+
+## END

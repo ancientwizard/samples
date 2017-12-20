@@ -29,6 +29,8 @@
 ##                          purpose as long as user takes full responsibility.
 ##
 ##  Changes:
+##    2017-Dec-19  (VICB) - Minor perl-critic and style sanding (untested)
+##
 ##    2010-Feb-08  (VICB) - Added zone-level resource control options (Container)
 ##                          --memory  physical,locked,swap
 ##                          --cpu     num-cpu,cpu-shares,scheduling-class
@@ -56,100 +58,104 @@
 ##
 
 use strict;
+use warnings;
 use Carp;
 use Getopt::Long;
 use Data::Dumper;
+
+our $VERSION = 1.0;
 
 my $opts = {};
 
 GetOptions(
   ## Create
-    'c'			=> \$opts->{create},
-    'create'		=> \$opts->{create},
+    'c'           => \$opts->{create},
+    'create'      => \$opts->{create},
 
   ## Delete
-    'd'			=> \$opts->{delete},
-    'delete'		=> \$opts->{delete},
+    'd'           => \$opts->{delete},
+    'delete'      => \$opts->{delete},
 
   ## zonename
-    'z=s'		=> \$opts->{zonename},
-    'zonename=s'	=> \$opts->{zonename},
+    'z=s'         => \$opts->{zonename},
+    'zonename=s'  => \$opts->{zonename},
 
   ## BrandZ
-    'b=s'		=> \$opts->{brand},
-    'brand=s'		=> \$opts->{brand},
+    'b=s'         => \$opts->{brand},
+    'brand=s'     => \$opts->{brand},
 
   ## Clone
-    'e=s'		=> \$opts->{clone},
-    'clone=s'		=> \$opts->{clone},
+    'e=s'         => \$opts->{clone},
+    'clone=s'     => \$opts->{clone},
 
   ## Solaris container (memory)
-    'memory=s'		=> \$opts->{t_memory},
+    'memory=s'    => \$opts->{t_memory},
 
   ## Solaris container (cpu)
-    'cpu=s'		=> \$opts->{t_cpu},
+    'cpu=s'       => \$opts->{t_cpu},
 
   ## Media
-    'm=s'		=> \$opts->{media},
-    'media=s'		=> \$opts->{media},
+    'm=s'         => \$opts->{media},
+    'media=s'     => \$opts->{media},
 
   ## Hostname
-    'h=s'		=> \$opts->{hostname},
-    'hostname=s'	=> \$opts->{hostname},
+    'h=s'         => \$opts->{hostname},
+    'hostname=s'  => \$opts->{hostname},
 
   ## zone path
-    'p=s'		=> \$opts->{zonepath},
-    'zonepath=s'	=> \$opts->{zonepath},
+    'p=s'         => \$opts->{zonepath},
+    'zonepath=s'  => \$opts->{zonepath},
 
   ## Autoboot [ true | false ]
-    'a=s'		=> \$opts->{autoboot},
-    'autoboot=s'	=> \$opts->{autoboot},
+    'a=s'         => \$opts->{autoboot},
+    'autoboot=s'  => \$opts->{autoboot},
 
   ## Networks
-    'n=s'		=> \$opts->{network},
-    'network=s'		=> \$opts->{network},
+    'n=s'         => \$opts->{network},
+    'network=s'   => \$opts->{network},
 
   ## Interface type (shared | exclusive)
-    'k=s'		=> \$opts->{iptype},
-    'iptype=s'		=> \$opts->{iptype},
+    'k=s'         => \$opts->{iptype},
+    'iptype=s'    => \$opts->{iptype},
 
   ## inherit-pkg-dir
-    'i=s'		=> \$opts->{inherit},
-    'inherit=s'		=> \$opts->{inherit},
+    'i=s'         => \$opts->{inherit},
+    'inherit=s'   => \$opts->{inherit},
 
   ## fs
-    'f=s'		=> \$opts->{fs},
-    'filesystem=s'	=> \$opts->{fs},
+    'f=s'         => \$opts->{fs},
+    'filesystem=s'=> \$opts->{fs},
 
   ## Timezone
-    't=s'		=> \$opts->{timezone},
-    'timezone=s'	=> \$opts->{timezone},
+    't=s'         => \$opts->{timezone},
+    'timezone=s'  => \$opts->{timezone},
 
   ## Time server
-    'r=s'		=> \$opts->{timeserv},
-    'timeserv=s'	=> \$opts->{timeserv},
+    'r=s'         => \$opts->{timeserv},
+    'timeserv=s'  => \$opts->{timeserv},
 
   ## Name Service
-    's=s'		=> \$opts->{nameserv},
-    'nameserv=s'	=> \$opts->{nameserv},
+    's=s'         => \$opts->{nameserv},
+    'nameserv=s'  => \$opts->{nameserv},
 
   ## Root Account Password
-    'rootpassword=s'	=> \$opts->{rootpw},
-    'rootpw=s'		=> \$opts->{rootpw},
+    'rootpassword=s'=> \$opts->{rootpw},
+    'rootpw=s'    => \$opts->{rootpw},
 
   ## Debug
-    'debug'		=> \$opts->{debug},
+    'debug'       => \$opts->{debug},
 
   ## Help
-    'help'		=> \$opts->{help}
+    'help'        => \$opts->{help}
 );
 
 ###############################################################################
 ###  HELP
 ###############################################################################
 
-my @opts = grep(defined $_, values %$opts );
-if( defined $opts->{help} and $opts->{help} or scalar @opts == 0 )
+my @opts = grep { defined } values % $opts;
+
+if ( defined $opts->{help} and $opts->{help} or scalar @opts == 0 )
 {
   system("perldoc $0");
   exit 0;
@@ -165,22 +171,22 @@ if( defined $opts->{help} and $opts->{help} or scalar @opts == 0 )
   $zone->clone   ( $opts->{clone}    )  if defined $opts->{clone};
   $zone->brand   ( $opts->{brand}    )  if defined $opts->{brand};
   $zone->media   ( $opts->{media}    )  if defined $opts->{media};
-  $zone->hostname( $opts->{hostname} )	if defined $opts->{hostname};
+  $zone->hostname( $opts->{hostname} )  if defined $opts->{hostname};
   $zone->zonepath( '/zones'          ); ## Default
-  $zone->zonepath( $opts->{zonepath} )	if defined $opts->{zonepath};
-  $zone->autoboot( $opts->{autoboot} )	if defined $opts->{autoboot};
-  $zone->network ( $opts->{network}  )	if defined $opts->{network};
-  $zone->inherit ( $opts->{inherit}  )	if defined $opts->{inherit};
-  $zone->paths   ( $opts->{fs}       )	if defined $opts->{fs};
-  $zone->timezone( $opts->{timezone} )	if defined $opts->{timezone};
-  $zone->timeserv( $opts->{timeserv} )	if defined $opts->{timeserv};
+  $zone->zonepath( $opts->{zonepath} )  if defined $opts->{zonepath};
+  $zone->autoboot( $opts->{autoboot} )  if defined $opts->{autoboot};
+  $zone->network ( $opts->{network}  )  if defined $opts->{network};
+  $zone->inherit ( $opts->{inherit}  )  if defined $opts->{inherit};
+  $zone->paths   ( $opts->{fs}       )  if defined $opts->{fs};
+  $zone->timezone( $opts->{timezone} )  if defined $opts->{timezone};
+  $zone->timeserv( $opts->{timeserv} )  if defined $opts->{timeserv};
   $zone->nameserv( $opts->{nameserv} )  if defined $opts->{nameserv};
   $zone->iptype  ( $opts->{iptype}   )  if defined $opts->{iptype};
   $zone->password( $opts->{rootpw}   )  if defined $opts->{rootpw};
   $zone->memory  ( $opts->{t_memory} )  if defined $opts->{t_memory};
   $zone->cpu     ( $opts->{t_cpu}    )  if defined $opts->{t_cpu};
 
-  unless( defined $zone->timezone )
+  if ( ! defined $zone->timezone )
   {
     print " WARN -- A timezone was not defined or could not be discovered.\n";
     print "         aborting run\n";
@@ -192,8 +198,8 @@ if( defined $opts->{help} and $opts->{help} or scalar @opts == 0 )
 ###  Misc Vars
 ###############################################################################
 
-my $line="";		# Used for file enum
-my $pid=$$;		# Processid (used for uniq tmp files)
+my $line  = '';   # Used for file enum
+my $pid   = $$;   # Processid (used for uniq tmp files)
 
 
 ###############################################################################
@@ -237,28 +243,29 @@ if( defined $opts->{create} and $opts->{create} )
   # Collect Root password if we dont have one
   ##################################################
 
-  unless( defined $zone->password )
+  if ( ! defined $zone->password )
   {
-    my @SHADOW=();	# Elements of the root shadow entry
+    my @SHADOW=();  # Elements of the root shadow entry
     my $SHAD;
 
-    if( open $SHAD, '<', '/etc/shadow' )
+    ## no critic [InputOutput::RequireBriefOpen]
+    if ( open $SHAD, '<', '/etc/shadow' )
     {
-      while($line = <$SHAD>)
+      while( $line = <$SHAD> )
       {
-        if ($line =~ /^root:/)
+        if ( $line =~ /^root:/x )
         {
-          @SHADOW = split(/:/,$line);
+          @SHADOW = split m/:/x, $line;
           last;
         }
       }
 
-      close($SHAD);
+      close( $SHAD ) or 0;
     }
     else
     {
       print(" WARN - Could not get root's encrypted passwd to place in non-global zone\n");
-      print("        using [ changeme ] as the password.");
+      print("        using [ changeme ] as the password.\n");
 
       @SHADOW = ( '', 'ir9Ru048IlDPs' );
     }
@@ -270,7 +277,7 @@ if( defined $opts->{create} and $opts->{create} )
   # Create the zone config file
   ##################################################
 
-  if( open $ZCF, '>',  ${temp_zone_def} )
+  if ( open $ZCF, '>',  ${temp_zone_def} )
   {
     my $zconfig = $zone->zone_definition;
 
@@ -278,14 +285,14 @@ if( defined $opts->{create} and $opts->{create} )
     {
       printf( $ZCF "%s\n", $l );
     }
-    close( $ZCF );
+    close( $ZCF ) || 0;
   }
 
 
   # Create the sysidcfg 
   ##################################################
 
-  if( $zone->is_native and open( $ZCF, '>', ${temp_sysidcfg} ))
+  if ( $zone->is_native and open( $ZCF, '>', ${temp_sysidcfg} ))
   {
     my $sysidcfg = $zone->sysidcfg;
 
@@ -293,14 +300,15 @@ if( defined $opts->{create} and $opts->{create} )
     {
       printf( $ZCF "%s\n", $line );
     }
-    close( $ZCF );
+    close( $ZCF ) || 0;
   }
 
 
   # Script Build
   ##################################################
 
-  if( open $ZCF, '>', ${temp_build} )
+  ## no critic [InputOutput::RequireBriefOpen]
+  if ( open $ZCF, '>', ${temp_build} )
   {
     my $zoneroot = $zone->zonepath . '/' . $zname;
 
@@ -313,7 +321,7 @@ if( defined $opts->{create} and $opts->{create} )
 
     my $install_t = 'install';
 
-    if( $zone->clone )
+    if ( $zone->clone )
     {
       my $clone_copy = '';
 
@@ -321,10 +329,10 @@ if( defined $opts->{create} and $opts->{create} )
       print "        fail unless the source zone is in the \"installed\" state.\n";
 
       $clone_copy = '-m copy ' if defined $zone->media and 'copy' eq lc($zone->media);
-      $install_t = sprintf("clone %s%s", $clone_copy, $zone->clone );
+      $install_t = sprintf( 'clone %s%s', $clone_copy, $zone->clone );
     }
 
-    if( $zone->is_native )
+    if ( $zone->is_native )
     {
       printf( $ZCF "# Install/Build the zone\n" );
       printf( $ZCF "echo \"(/usr/sbin/zoneadm -z %s %s)\"\n", $zname, $install_t );
@@ -343,11 +351,11 @@ if( defined $opts->{create} and $opts->{create} )
       $cluster = ' ' . $cluster unless( length( $cluster ) == 0 );
       if( $zone->clone )
       {
-        $install_t = sprintf("clone %s", $zone->clone );
+        $install_t = sprintf('clone %s', $zone->clone );
       }
       else
       {
-        $install_t = sprintf("install -d %s%s", $media, $cluster );
+        $install_t = sprintf('install -d %s%s', $media, $cluster );
       }
       printf( $ZCF "# Install/Build the zone\n" );
       printf( $ZCF "echo \"(/usr/sbin/zoneadm -z %s %s)\"\n", $zname, $install_t );
@@ -359,9 +367,9 @@ if( defined $opts->{create} and $opts->{create} )
     printf( $ZCF "echo \"(/usr/sbin/zoneadm -z %s boot)\"\n", $zname );
     printf( $ZCF "       /usr/sbin/zoneadm -z %s boot\n",     $zname );
 
-    close( $ZCF );
+    close( $ZCF ) || 0;
 
-    if( defined $opts->{debug} )
+    if ( defined $opts->{debug} )
     {
       print "\n";
       print "INFO -- Debug mode\n";
@@ -375,7 +383,7 @@ if( defined $opts->{create} and $opts->{create} )
       system("cat $temp_zone_def");
       print "\n";
 
-      if( $zone->is_native )
+      if ( $zone->is_native )
       {
         print "# -- $temp_sysidcfg\n";
         system("cat $temp_sysidcfg");
@@ -400,7 +408,7 @@ if( defined $opts->{create} and $opts->{create} )
 ###	DELETE
 ###############################################################################
 
-if( defined $opts->{delete} and $opts->{delete} )
+if ( defined $opts->{delete} and $opts->{delete} )
 {
   printf "Delete operation not supported - remove it yourself\n";
   exit 0;
@@ -432,6 +440,8 @@ exit 0;
 
 package Property;
 
+use strict;
+use warnings;
 use Carp;
 
 ##
@@ -560,7 +570,7 @@ sub toString
   my $prop;
   my $result;
 
-  foreach $prop ( @$props )
+  foreach my $prop ( @$props )
   {
     $result .= sprintf("  %-15s : %s\n", $prop, $self->{PROPS}{$prop} );
   }
@@ -582,6 +592,12 @@ sub _setget
 ##  Implements simplified zone creation and deletion interface
 ##
 
+## no critic [Modules::ProhibitMultiplePackages]
+## no critic [ControlStructures::ProhibitUnlessBlocks]
+## no critic [BuiltinFunctions::RequireBlockGrep]
+## no critic [RegularExpressions::RequireExtendedFormatting]
+## no critic [InputOutput::RequireCheckedClose]
+
 package Solaris::zone;
 
 use strict;
@@ -599,7 +615,7 @@ sub new
 
   unless( defined $zonename )
   {
-    croak "no defined zone-name";
+    croak 'no defined zone-name';
   }
 
   $self->zonename( $zonename );
@@ -620,39 +636,39 @@ sub new
   return $self;
 }
 
-sub zonename    { $_[0]->_setget('ZONE___', $_[1] );}
-sub clone       { $_[0]->_setget('CLONE__', $_[1] );}
-sub media       { $_[0]->_setget('MEDIA__', $_[1] );}
-sub _hostname   { $_[0]->_setget('HOST___', $_[1] );}
-sub zonepath    { $_[0]->_setget('ZPTH___', $_[1] );}
-sub _autoboot   { $_[0]->_setget('ABOOT__', $_[1] );}
-sub _network    { $_[0]->_setget('NETS___', $_[1] );}
-sub _iptype     { $_[0]->_setget('IPTYPE_', $_[1] );}
-sub _paths      { $_[0]->_setget('DIRS_WR', $_[1] );}
-sub _inherit    { $_[0]->_setget('DIRS_RO', $_[1] );}
-sub timezone    { $_[0]->_setget('TZ_____', $_[1] );}
-sub password    { $_[0]->_setget('PW_____', $_[1] );}
-sub timeserv    { $_[0]->_setget('NTP____', $_[1] );}
-sub nameserv    { $_[0]->_setget('NAMSRV_', $_[1] );}
-sub _brandz     { $_[0]->_setget('BRANDZ_', $_[1] );}
-sub cluster     { $_[0]->_setget('CLUSTR_', $_[1] );}
-sub template    { $_[0]->_setget('TEMPLT_', $_[1] );}
-sub num_cpu     { $_[0]->_setget('NUMCPU_', $_[1] );}
-sub cpu_shares  { $_[0]->_setget('CPUSHRS', $_[1] );}
-sub sched_class { $_[0]->_setget('SCHDCLS', $_[1] );}
-sub mem_phys    { $_[0]->_setget('MPHYS__', $_[1] );}
-sub mem_locked  { $_[0]->_setget('MLOCKED', $_[1] );}
-sub mem_swap    { $_[0]->_setget('MSWAP__', $_[1] );}
+sub zonename    { return $_[0]->_setget('ZONE___', $_[1] );}
+sub clone       { return $_[0]->_setget('CLONE__', $_[1] );}
+sub media       { return $_[0]->_setget('MEDIA__', $_[1] );}
+sub _hostname   { return $_[0]->_setget('HOST___', $_[1] );}
+sub zonepath    { return $_[0]->_setget('ZPTH___', $_[1] );}
+sub _autoboot   { return $_[0]->_setget('ABOOT__', $_[1] );}
+sub _network    { return $_[0]->_setget('NETS___', $_[1] );}
+sub _iptype     { return $_[0]->_setget('IPTYPE_', $_[1] );}
+sub _paths      { return $_[0]->_setget('DIRS_WR', $_[1] );}
+sub _inherit    { return $_[0]->_setget('DIRS_RO', $_[1] );}
+sub timezone    { return $_[0]->_setget('TZ_____', $_[1] );}
+sub password    { return $_[0]->_setget('PW_____', $_[1] );}
+sub timeserv    { return $_[0]->_setget('NTP____', $_[1] );}
+sub nameserv    { return $_[0]->_setget('NAMSRV_', $_[1] );}
+sub _brandz     { return $_[0]->_setget('BRANDZ_', $_[1] );}
+sub cluster     { return $_[0]->_setget('CLUSTR_', $_[1] );}
+sub template    { return $_[0]->_setget('TEMPLT_', $_[1] );}
+sub num_cpu     { return $_[0]->_setget('NUMCPU_', $_[1] );}
+sub cpu_shares  { return $_[0]->_setget('CPUSHRS', $_[1] );}
+sub sched_class { return $_[0]->_setget('SCHDCLS', $_[1] );}
+sub mem_phys    { return $_[0]->_setget('MPHYS__', $_[1] );}
+sub mem_locked  { return $_[0]->_setget('MLOCKED', $_[1] );}
+sub mem_swap    { return $_[0]->_setget('MSWAP__', $_[1] );}
 
 sub cpu
 {
   ##  --cpu     num-cpu,cpu-shares,scheduling-class
-  my $self = shift(@_);
-  my $info = shift(@_);
+  my $self = shift;
+  my $info = shift;
 
-  if( defined $info )
+  if ( defined $info )
   {
-    my( $num, $shares, $sclass ) = split ',', $info;
+    my( $num, $shares, $sclass ) = split m=,=x, $info;
 
     $self->num_cpu( $num )          if defined $num;
     $self->cpu_shares( $shares )    if defined $shares;
@@ -679,9 +695,9 @@ sub memory
   my $self = shift(@_);
   my $info = shift(@_);
 
-  if( defined $info )
+  if ( defined $info )
   {
-    my( $phys, $locked, $swap ) = split ',', $info;
+    my( $phys, $locked, $swap ) = split m=,=x, $info;
 
     $self->mem_phys( lc($phys))     if defined $phys;
     $self->mem_locked( lc($locked)) if defined $locked;
@@ -703,25 +719,27 @@ sub memory
 
 sub brand
 {
-  my $self = shift(@_);
-  my $info = shift(@_);
+  my $self = shift;
+  my $info = shift;
 
   return $self->_brandz unless( defined $info );
 
-  my( $brand, $cluster ) = split( ',', $info );
+  my( $brand, $cluster ) = split m=,=x, $info;
 
   $self->_brandz( $brand   );
 
   $self->template( $cluster ) if $self->is_native;
   $self->cluster( $cluster )  if $self->is_brandlx;
+
+  return;
 }
 
 sub hostname
 {
-  my $self = shift(@_);
-  my $name = shift(@_);
+  my $self = shift;
+  my $name = shift;
 
-  $self->_hostname( $name ) if( defined $name );
+  $self->_hostname( $name ) if defined $name;
 
   $name = $self->_hostname;
   $name = $self->zonename  unless defined $name;
@@ -731,60 +749,60 @@ sub hostname
 
 sub paths
 {
-  my $self = shift(@_);
-  my $dirs = shift(@_);
+  my $self = shift;
+  my $dirs = shift;
 
-  return $self->_paths unless( defined $dirs );
+  return $self->_paths unless defined $dirs;
 
   ## Define Dirs
-  my $dirpaths = [ split(',', $dirs ) ];
+  my $dirpaths = [ split m=,=x, $dirs ];
 
-  $self->_paths( $dirpaths );
+  return $self->_paths( $dirpaths );
 }
 
 sub is_native
 {
-  my $self = shift(@_);
+  my $self = shift;
   return ( ! defined $self->brand ) unless defined $self->brand;
   return (   defined $self->brand and lc($self->brand) eq 'native' );
 }
 
 sub is_brandlx
 {
-  my $self = shift(@_);
-  return ( defined $self->brand and lc($self->brand) eq 'sunwlx' );
+  my $self = shift;
+  return defined $self->brand && lc($self->brand) eq 'sunwlx';
 }
 
 sub inherit
 {
-  my $self = shift(@_);
-  my $dirs = shift(@_);
+  my $self = shift;
+  my $dirs = shift;
 
-  return $self->_inherit unless( defined $dirs );
+  return $self->_inherit unless defined $dirs;
 
   ## Define Dirs
-  my $dirpaths = [ split(',', $dirs ) ];
+  my $dirpaths = [ split m=,=x, $dirs ];
 
-  $self->_inherit( $dirpaths );
+  return $self->_inherit( $dirpaths );
 }
 
 
 sub iptype
 {
-  my $self  = shift(@_);
-  my $itype = shift(@_);
+  my $self  = shift;
+  my $itype = shift;
 
   IP_TYPE:
   {
-    if( defined $itype && 'shared' eq lc( $itype ))
+    if ( defined $itype && 'shared' eq lc( $itype ))
     {
-      $itype = lc( $itype );
+      $itype = lc $itype;
       last IP_TYPE;
     }
 
-    if( defined $itype && 'exclusive' eq lc( $itype ))
+    if ( defined $itype && 'exclusive' eq lc( $itype ))
     {
-      $itype = lc( $itype );
+      $itype = lc $itype;
       last IP_TYPE;
     }
 
@@ -793,13 +811,13 @@ sub iptype
     exit -1;
   }
 
-  $self->_iptype( $itype );
+  return $self->_iptype( $itype );
 }
 
 sub network
 {
-  my $self = shift(@_);
-  my $netw = shift(@_);
+  my $self = shift;
+  my $netw = shift;
 
   return $self->_network unless( defined $netw );
 
@@ -807,11 +825,11 @@ sub network
   my $nettype  = undef;
   my $typeerr  = undef;
   my $networks = [];
-  my $netdata  = [ split(',', $netw ) ];
+  my $netdata  = [ split m=,=x, $netw ];
 
-  foreach my $ent ( @$netdata )
+  foreach my $ent ( @ $netdata )
   {
-    my( $interface, $network ) = split('=', $ent, 2 );
+    my( $interface, $network ) = split m/=/x, $ent, 2;
 
     ## We should test sanaty of this information (but we dont)
     ##  does /dev/${interface} exist?
@@ -819,23 +837,23 @@ sub network
     ##  zonecfg will do some checking for us but it would be better
     ##  if we try to catch some things now.
 
-    push @$networks, [ $interface, $network ];
+    push @ $networks, [ $interface, $network ];
   }
 
-  $self->_network( $networks );
+  return $self->_network( $networks );
 }
 
 sub autoboot
 {
-  my $self = shift(@_);
-  my $auto = shift(@_);
+  my $self = shift;
+  my $auto = shift;
 
-  $auto = lc($auto) if( defined $auto );
+  $auto = lc $auto if defined $auto;
 
-  if( defined $auto and $auto =~ /^(true|false)$/ )
+  if ( defined $auto and $auto =~ /^(true|false)$/ )
   {
     $self->_autoboot( $auto );
-  }  
+  }
 
   return $self->_autoboot;
 }
@@ -843,64 +861,63 @@ sub autoboot
 
 sub zone_definition
 {
-  my $self = shift(@_);
+  my $self = shift;
   my $rslt = [];
 
-  if( $self->is_native )
+  if ( $self->is_native )
   {
-    my $template = defined $self->template ? sprintf(" -t %s", $self->template ) : '';
-    push( @$rslt, "create -F${template}" );
+    my $template = defined $self->template ? sprintf(' -t %s', $self->template ) : '';
+    push @ $rslt, "create -F${template}";
   }
   else
   {
-    push( @$rslt, sprintf("create -F -t %s", $self->brand ));
+    push @ $rslt, sprintf 'create -F -t %s', $self->brand;
   }
 
-  push( @$rslt, sprintf("set zonepath=%s/%s", $self->zonepath, $self->zonename ));
-  push( @$rslt, sprintf("set autoboot=%s",    $self->autoboot ));
+  push @ $rslt, sprintf 'set zonepath=%s/%s', $self->zonepath, $self->zonename;
+  push @ $rslt, sprintf 'set autoboot=%s',    $self->autoboot;
 
   ## Read-Write Filesystems
   ##  (assumption: (global):/export/home -> (non-global):/export/home
   my $readwrite = $self->paths;
 
-  foreach my $dir ( @$readwrite )
+  foreach my $dir ( @ $readwrite )
   {
-    push( @$rslt, "add fs" );
-    push( @$rslt, sprintf("set dir=%s", $dir ));
-    push( @$rslt, sprintf("set special=%s", $dir ));
-    push( @$rslt, 'set type=lofs' );
-    push( @$rslt, 'add options [rw,nodevices]' );
-    push( @$rslt, "end" );
+    push @ $rslt, 'add fs';
+    push @ $rslt, 'set dir=' . $dir;
+    push @ $rslt, 'set special=' . $dir;
+    push @ $rslt, 'set type=lofs';
+    push @ $rslt, 'add options [rw,nodevices]';
+    push @ $rslt, 'end';
   }
 
   ## Inherited Readonly-paths
   my $inherited= $self->inherit;
 
-  foreach my $dir ( @$inherited )
+  foreach my $dir ( @ $inherited )
   {
-    push( @$rslt, "add inherit-pkg-dir" );
-    push( @$rslt, sprintf("set dir=%s", $dir ));
-    push( @$rslt, "end" );
+    push @ $rslt, 'add inherit-pkg-dir';
+    push @ $rslt, 'set dir=' . $dir;
+    push @ $rslt, 'end';
   }
 
   ## IP-TYPE ()
 
-  if( defined $self->_iptype && 'exclusive' eq $self->_iptype )
+  if ( defined $self->_iptype && 'exclusive' eq $self->_iptype )
   {
-    push( @$rslt, sprintf("set ip-type=%s", $self->_iptype ));
+    push @ $rslt, 'set ip-type=' . $self->_iptype;
   }
 
   ## Network interfaces
   my $networks = $self->network;
 
-  foreach my $net ( 0..$#$networks )
+  foreach my $net ( 0 .. $#$networks )
   {
-    push( @$rslt, "add net" );
-    push( @$rslt, sprintf("set physical=%s", $networks->[$net][0] ));
-    push( @$rslt, sprintf("set address=%s",  $networks->[$net][1] ))
-      unless( defined $self->_iptype && 'exclusive' eq $self->_iptype );
-#       if( defined $networks->[$net][1] && length $networks->[$net][1]);
-    push( @$rslt, "end" );
+    push @ $rslt, 'add net';
+    push @ $rslt, 'set physical=' . $networks->[$net][0];
+    push @ $rslt, 'set address=' .  $networks->[$net][1]
+      unless defined $self->_iptype && 'exclusive' eq $self->_iptype;
+    push @ $rslt, 'end';
   }
 
   ## Container Support
@@ -916,14 +933,14 @@ sub zone_definition
     ## We assume the caller is using the correct mix of arguments and values!
     ##  (we let zonecfg and zoneadm do the complaining!)
 
-    push( @$rslt, sprintf("add capped-cpu; set ncpus=%s; end", $cpus ))
-      if( defined $cpus and '' ne $cpus );
+    push @ $rslt, sprintf 'add capped-cpu; set ncpus=%s; end', $cpus
+      if defined $cpus && '' ne $cpus;
 
-    push( @$rslt, sprintf("set cpu-shares = %s", $shares ))
-      if( defined $shares and '' ne $shares );
+    push @ $rslt, sprintf 'set cpu-shares = %s', $shares
+      if defined $shares && '' ne $shares;
 
-    push( @$rslt, sprintf("set scheduling-class = %s", $sclass ))
-      if( defined $sclass and '' ne $sclass );
+    push @ $rslt, sprintf 'set scheduling-class = %s', $sclass
+      if defined $sclass && '' ne $sclass;
   }
 
   MEM_CONSTRAINTS:
@@ -932,13 +949,13 @@ sub zone_definition
     my $locked = $self->mem_locked;
     my $swap   = $self->mem_swap;
 
-    last MEM_CONSTRAINTS unless( defined $phys or defined $locked or defined $swap );
+    last MEM_CONSTRAINTS unless defined $phys || defined $locked || defined $swap;
 
-    push( @$rslt, "add capped-memory" );
-    push( @$rslt, "set physical = $phys"   ) if( defined $phys   and '' ne $phys );
-    push( @$rslt, "set locked   = $locked" ) if( defined $locked and '' ne $locked );
-    push( @$rslt, "set swap     = $swap"   ) if( defined $swap   and '' ne $swap );
-    push( @$rslt, "end" );
+    push @ $rslt, 'add capped-memory';
+    push @ $rslt, "set physical = $phys"    if defined $phys   && '' ne $phys;
+    push @ $rslt, "set locked   = $locked"  if defined $locked && '' ne $locked;
+    push @ $rslt, "set swap     = $swap"    if defined $swap   && '' ne $swap;
+    push @ $rslt, 'end';
   }
 
   return $rslt;
@@ -947,29 +964,29 @@ sub zone_definition
 
 sub sysidcfg
 {
-  my $self = shift(@_);
+  my $self = shift;
   my $conf = [];
 
   my $interface = 'primary';
   my $networks  = $self->network;
 
-  if( defined $self->_iptype && 'exclusive' eq $self->_iptype &&
-      defined $networks && 'ARRAY' eq ref $networks )
+  if ( defined $self->_iptype && 'exclusive' eq $self->_iptype &&
+       defined $networks && 'ARRAY' eq ref $networks )
   {
     $interface = $networks->[0][0];
   }
 
-  push( @$conf, sprintf("timezone=%s", $self->timezone ));
-  push( @$conf, sprintf("system_locale=%s", 'C' ));
-  push( @$conf, sprintf("root_password=%s", $self->password ));
-  push( @$conf, "name_service=NONE" ) unless defined $self->nameserv;
-  push( @$conf, $self->nameserv )         if defined $self->nameserv;
-  push( @$conf, sprintf("security_policy=%s", 'NONE' ));
-  push( @$conf, sprintf("terminal=%s",        'vt100' ));
-  push( @$conf, sprintf("timeserver=%s", $self->timeserv )) if defined $self->timeserv;
-  push( @$conf, sprintf("nfs4_domain=%s",     'dynamic' ));
+  push @ $conf, 'timezone=' . $self->timezone;
+  push @ $conf, 'system_locale=C';
+  push @ $conf, 'root_password=' . $self->password;
+  push @ $conf, 'name_service=NONE' unless defined $self->nameserv;
+  push @ $conf, $self->nameserv         if defined $self->nameserv;
+  push @ $conf, 'security_policy=NONE';
+  push @ $conf, 'terminal=vt100';
+  push @ $conf, 'timeserver=' . $self->timeserv if defined $self->timeserv;
+  push @ $conf, 'nfs4_domain=dynamic';
 
-  if( defined $self->_iptype && 'exclusive' eq $self->_iptype )
+  if ( defined $self->_iptype && 'exclusive' eq $self->_iptype )
   {
     foreach my $net ( 0..$#$networks )
     {
@@ -977,21 +994,20 @@ sub sysidcfg
       my $ip_addr    = $self->_getipadder($networks->[$net][1]);
       my $ip_mask    = $self->_getnetmask($networks->[$net][1]);
 
-      push( @$conf, sprintf("network_interface=%s {hostname=%s ip_address=%s netmask=%s protocol_ipv6=no}",
-        $networks->[$net][0],
-        $self->hostname,
-        $ip_addr,
-        $ip_mask
-      ));
+      push @ $conf, sprintf 'network_interface=%s {hostname=%s ip_address=%s netmask=%s protocol_ipv6=no}'
+        , $networks->[$net][0]
+        , $self->hostname
+        , $ip_addr
+        , $ip_mask;
     }
   }
   else
   {
-    push( @$conf, sprintf("network_interface=%s {hostname=%s}",
+    push @ $conf, sprintf 'network_interface=%s {hostname=%s}',
         ((defined $self->_network && scalar @{$self->_network} )
           ? $interface : 'NONE' ),
         $self->hostname
-      ));
+      ;
   }
 
   return $conf;
@@ -1000,13 +1016,13 @@ sub sysidcfg
 
 sub _getipadder
 {
-  my $self = shift(@_);
-  my $data = shift(@_);
+  my $self = shift;
+  my $data = shift;
   my $addr = '';
 
-  if( defined $data && $data =~ m=^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}= )
+  if ( defined $data && $data =~ m=^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}=x )
   {
-    my( $ip, $mbits ) = split '/', $data;
+    my( $ip, $mbits ) = split m=[/]=x, $data;
     $addr = $ip;
   }
 
@@ -1015,13 +1031,13 @@ sub _getipadder
 
 sub _getnetmask
 {
-  my $self = shift(@_);
-  my $data = shift(@_);
+  my $self = shift;
+  my $data = shift;
   my $mask = 'junk';
 
-  if( defined $data && $data =~ m=^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}= )
+  if ( defined $data && $data =~ m=^[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}=x )
   {
-    my( $ip, $mbits ) = split '/', $data;
+    my( $ip, $mbits ) = split m=[/]=x, $data;
     my $hbits = 32 - $mbits;
     my $bmask = 0;
 
@@ -1039,18 +1055,16 @@ sub _getnetmask
     }
 
 
-    $mask = sprintf("%d.%d.%d.%d",
+    $mask = sprintf '%d.%d.%d.%d',
         ( $bmask >> 24 ) & 255,
         ( $bmask >> 16 ) & 255,
         ( $bmask >>  8 ) & 255,
         ( $bmask       ) & 255
-      );
+      ;
   }
 
   return $mask;
 }
-
-
 
 
 __END__
@@ -1065,7 +1079,7 @@ __END__
 
 zonetool.pl - A Solaris zone building tool
 
-=head1 SYNOPSYS
+=head1 SYNOPSIS
 
 The zonetool.pl controls and configures many aspects of the zone
 building process from a single command line operation.
@@ -1090,6 +1104,12 @@ building process from a single command line operation.
 
  (Zone Removal Unsupported)
  $ ./zonetool -d -z zonename (unsupported)
+
+
+=head1 DESCRIPTION
+
+A tool for automating the creation of zones on Solaris 10+.
+See SYNOPSIS and USAGE
 
 =head1 OPTIONS
 
@@ -1263,15 +1283,41 @@ Display this documentation.
 
 =back
 
+=head1 REQUIRED ARGUMENTS
+
+Many See SYNOPSIS
+
+=head1 DIAGNOSTICS
+
+None provided
+
+=head1 CONFIGURATION
+
+None
+
+=head1 INCOMPATIBILITIES
+
+Has not been tested in years, newer OS features and changes could have created issues.
+
 =head1 Source
 
 Master location: south-campus:/data/mobilize/DZ-Management/zonetool/
+
+=head1 EXIT STATUS
+
+Basic PASS/FAIL exit status
+
+
+=head1 DEPENDENCIES
+
+Solaris 10+, zones zfs etc
+
 
 =head1 AUTHOR
 
 Victor Burns
 
-=head1 BUGS
+=head1 BUGS AND LIMITATIONS
 
 None Known (Okay many, but who's looking)
 
@@ -1279,7 +1325,7 @@ None Known (Okay many, but who's looking)
 
 N/A
 
-=head1 COPYRIGHT
+=head1 LICENSE AND COPYRIGHT
 
 LICENSE 2009, Released by permission to Linux Journal for inclusion in publication and/or electronic downloading by the public from LINUX Journal servers. The end-user takes full responsibility for the use of this script/tool/utility. Texas Instruments and the Author take no responsibility for its use.
 

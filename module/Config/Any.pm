@@ -12,6 +12,7 @@
 ##    Date: 2013-11
 ##
 ##  Changes:
+##    2017-12-19 VICB - Style freshened
 ##    2013-11-19 VICB - Initial Version
 ##
 ##  PerlCritic: Passes level 3 - with pain
@@ -146,7 +147,7 @@ sub new
   #--  will be stored under (empty/undef == default/global)
   $self->module( shift );
 
-  unless ( defined $C_SIMPLE )
+  if ( ! defined $C_SIMPLE )
   {
     #-- Load existing ini file OR start a new one
     $C_SIMPLE = ( defined $C_PATHNAME && -f $C_PATHNAME )
@@ -156,7 +157,7 @@ sub new
 
   #-- Unable to open Existing Configuration
   #--  (runing with configuration file disabled - in memory only)
-  unless ( $C_SIMPLE )
+  if ( ! $C_SIMPLE )
   {
     $self->error_message("Unable to open ($C_PATHNAME) - " . $!);
     $C_SIMPLE = Config::SimpleII->new( syntax => 'ini' );
@@ -204,7 +205,7 @@ sub DESTROY
     }
     else
     {
-      Returned->new->error_message("Unable to write configuration file; file is undefined.");
+      Returned->new->error_message('Unable to write configuration file; file is undefined.');
     }
   }
 
@@ -239,11 +240,11 @@ sub openDB
 
   #-- Connect to DB if not already connected
 
-  unless ( defined $M_CONN )
+  if ( ! defined $M_CONN )
   {
     my $timer  = time;
     my $action = POSIX::SigAction->new(
-        sub { croak "DB connect timeout" },
+        sub { croak 'DB connect timeout' },
         POSIX::SigSet->new( SIGALRM )
     );
     my $oldaction = POSIX::SigAction->new();
@@ -263,7 +264,7 @@ sub openDB
     sigaction( SIGALRM, $oldaction );
 
     #-- Oops failed to get a DB connection?
-    unless ( $M_CONN )
+    if ( ! $M_CONN )
     {
       $timer = time - $timer;
       chomp( $@ );
@@ -279,6 +280,7 @@ sub openDB
   }
 
   #-- Configure / Check UUID
+  ## no critic [Subroutines::ProtectPrivateSubs]
   Config::Any->new->_InitUUID;
 
   #-- No actual "Errors", handle things internally
@@ -297,7 +299,7 @@ sub closeDB
   {
     my $timer  = time;
     my $action = POSIX::SigAction->new(
-        sub { croak "DB disconnect timeout" },
+        sub { croak 'DB disconnect timeout' },
         POSIX::SigSet->new( SIGALRM )
     );
     my $oldaction = POSIX::SigAction->new();
@@ -320,7 +322,7 @@ sub closeDB
     $M_CONN    = undef;
     $timer     = time - $timer;
 
-    unless ( $rslt == 1 )
+    if ( $rslt != 1 )
     {
       Returned->new->debug_message((DBI::errstr() ? DBI::errstr() : $@)  . " (timeout=${timer} seconds - $rslt)\n");
       $rslt = -1;
@@ -384,7 +386,7 @@ sub run
 ## (see POD)
 sub module
 {
-  my( $self, $prop ) = (shift,shift);
+  my ( $self, $prop ) = (shift,shift);
 
   return $self->_setget('_MODULE_____', $prop);
 }
@@ -720,7 +722,7 @@ sub _timed_sql_execute
     #-- Reconnect again later, mark the CLOSED flag to indicate it was working.
     closeDB();
     $S_CLOSED = 1;
-  }  
+  }
 
   return $ste;
 }
@@ -755,7 +757,7 @@ sub _sync2mysql
 
   foreach my $itm ( keys %$cfile )
   {
-    my( $module, $prop ) = split '[.]', $itm, 2;
+    my ( $module, $prop ) = split m=[.]=x, $itm, 2;
     $module = '__DEFAULT__' if $module eq 'default';
     _saveMySQL( $module, $prop, $cfile->{$itm} );
   }
@@ -843,7 +845,7 @@ sub _sync2cfile
     }
     else
     {
-      Returned->new->error_message("Unable to write configuration file; file is undefined.");
+      Returned->new->error_message('Unable to write configuration file; file is undefined.');
     }
   }
 
@@ -867,7 +869,7 @@ __END__
 
 =head1 NAME
 
-Configure::Any
+Config::Any
 
 =over 4
 
@@ -940,7 +942,7 @@ Maintains a local "file" based copy.
 
 =back
 
-=head1 SUBROUTINES AND METHODS
+=head1 SUBROUTINES/METHODS
 
 =over 4
 

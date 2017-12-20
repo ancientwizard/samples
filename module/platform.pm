@@ -3,11 +3,12 @@
 ##
 ##  A simple object for detecting the local system type
 ##
-##  AUTHOR: V Burns (ancient.wizard)
+##  AUTHOR: V Burns ( ancient dot wizard at verizon dot net )
 ##    DATE: ??-???-2004
 ##
 ##  Changes:
-##    2009-Jan-09 VICB - clear Severity 5 messages from perlcritic
+##    2017-12-19 VICB - Style freshened
+##    2009-01-09 VICB - clear Severity 5 messages from perlcritic
 ##
 ##  Passes perlcritic level 3
 ##
@@ -28,7 +29,7 @@ sub BEGIN {
   if ( -d '/var' ) { $isUNIX = 1;     $isWinTEL = undef; }
   if ( -d 'C:\\' ) { $isUNIX = undef; $isWinTEL = 1; }
 
-  unless ( defined $isUNIX || defined $isWinTEL )
+  if ( ! defined $isUNIX && ! defined $isWinTEL )
   {
     croak( 'Could not determine if this system is UNIX or WinTEL.' );
   }
@@ -51,8 +52,8 @@ sub new
 ##  isWinTEL( )
 ##
 
-sub isUNIX   { return $isUNIX;   }
-sub isWinTEL { return $isWinTEL; }
+sub isUNIX   { return $isUNIX   }
+sub isWinTEL { return $isWinTEL }
 
 
 1;
@@ -113,7 +114,7 @@ None known
 
 =head1 AUTHOR
 
-V Burns (ancient.wizard@verizon.net)
+V Burns ( ancient dot wizard at verizon dot net )
 
 =head1 BUGS AND LIMITATIONS
 
